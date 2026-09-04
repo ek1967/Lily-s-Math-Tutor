@@ -39,6 +39,22 @@ export async function requestPersistentStorage(): Promise<boolean> {
   }
 }
 
+/**
+ * Whether the browser has agreed to keep this origin's storage.
+ *
+ * Read separately from requesting it, because the answer is worth showing: an
+ * origin without persistence can be cleared after about a week unused, and a
+ * parent who can see that is a parent who will make a backup.
+ */
+export async function isPersisted(): Promise<boolean | null> {
+  try {
+    if (!navigator.storage?.persisted) return null;
+    return await navigator.storage.persisted();
+  } catch {
+    return null;
+  }
+}
+
 export async function storageEstimate(): Promise<{ usage: number; quota: number } | null> {
   try {
     const est = await navigator.storage?.estimate?.();

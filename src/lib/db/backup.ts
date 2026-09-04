@@ -1,7 +1,21 @@
 import { db } from './db';
-import { readJson } from '@/lib/storage';
-import { DEFAULT_SETTINGS, type AppSettings } from '@/types/settings';
+import { readJson, writeJson } from '@/lib/storage';
+import {
+  DEFAULT_PARENT_SETTINGS,
+  DEFAULT_SETTINGS,
+  type AppSettings,
+  type ParentSettings,
+} from '@/types/settings';
 import { blobToBase64 } from '@/lib/files/imagePipeline';
+
+const SETTINGS_KEY = 'lmt.settings.v1';
+const PARENT_KEY = 'lmt.parent.v1';
+
+/** The parent fields worth carrying, deliberately without the PIN — see below. */
+export type BackupParentSettings = Pick<
+  ParentSettings,
+  'lastExportAt' | 'monthlyBudgetAgorot'
+>;
 
 /**
  * Export and import.
@@ -11,16 +25,24 @@ import { blobToBase64 } from '@/lib/files/imagePipeline';
  * for about a week, which would silently erase months of work. The device is a
  * cache; the exported file is the record.
  *
- * The API key is deliberately excluded. A backup file gets emailed to
- * yourself, dropped in a shared folder, or sent to another parent — none of
- * which should carry a live credential.
+ * Two things are deliberately excluded, for the same reason: a backup file gets
+ * emailed to yourself, dropped in a shared folder, or sent to another parent.
+ * The API key, because it is a live credential. The parent PIN hash, because a
+ * hash of a four-digit code is broken in a second — and the PIN guards nothing
+ * secret anyway, so re-setting it after a restore costs nothing.
  */
-export const BACKUP_VERSION = 1;
+export const BACKUP_VERSION = 2;
+
+/** Versions this build knows how to read. v1 files predate settings being
+ *  restored, and load fine — they simply carry no `parent` block. */
+const SUPPORTED_VERSIONS = [1, 2];
 
 export interface BackupFile {
   version: number;
   exportedAt: number;
   settings: AppSettings;
+  /** Absent in v1 files. */
+  parent?: BackupParentSettings;
   mastery: unknown[];
   sessions: unknown[];
   attempts: unknown[];
@@ -61,7 +83,8 @@ export async function exportAll(includePages = true): Promise<BackupFile> {
   return {
     version: BACKUP_VERSION,
     exportedAt: Date.now(),
-    settings: readJson<AppSettings>('lmt.settings.v1', DEFAULT_SETTINGS),
+    settings: readJson<AppSettings>(SETTINGS_KEY, DEFAULT_SETTINGS),
+    parent: pickParentFields(readJson<ParentSettings>(PARENT_KEY, DEFAULT_PARENT_SETTINGS)),
     mastery,
     sessions,
     attempts,
@@ -71,6 +94,13 @@ export async function exportAll(includePages = true): Promise<BackupFile> {
     kv,
     materials,
     pages,
+  };
+}
+
+function pickParentFields(settings: ParentSettings): BackupParentSettings {
+  return {
+    lastExportAt: settings.lastExportAt,
+    monthlyBudgetAgorot: settings.monthlyBudgetAgorot,
   };
 }
 
@@ -96,7 +126,7 @@ export interface ImportSummary {
  * doing this actually means.
  */
 export async function importAll(file: BackupFile): Promise<ImportSummary> {
-  if (file.version !== BACKUP_VERSION) {
+  if (!SUPPORTED_VERSIONS.includes(file.version)) {
     throw new Error(`unsupported backup version: ${file.version}`);
   }
 
@@ -131,6 +161,8 @@ export async function importAll(file: BackupFile): Promise<ImportSummary> {
     },
   );
 
+  restoreSettings(file);
+
   return {
     mastery: file.mastery.length,
     attempts: file.attempts.length,
@@ -138,6 +170,33 @@ export async function importAll(file: BackupFile): Promise<ImportSummary> {
     materials: file.materials.length,
     messages: file.messages.length,
   };
+}
+
+/**
+ * Puts the settings back.
+ *
+ * Restoring only the database was a data-losing bug: `hasOnboarded` lives in
+ * localStorage, so a restored device still believed it had a brand-new
+ * student, redirected into onboarding, ran the placement check, and wrote
+ * diagnostic-seeded mastery straight over the history that had just been
+ * recovered. The backup "worked" and the year was gone anyway.
+ */
+function restoreSettings(file: BackupFile): void {
+  if (file.settings) {
+    writeJson(SETTINGS_KEY, {
+      ...DEFAULT_SETTINGS,
+      ...file.settings,
+      // A restored device has plainly been set up before, whatever the file says.
+      hasOnboarded: true,
+    } satisfies AppSettings);
+  }
+
+  // The PIN is not in the file by design, so keep whatever this device has.
+  const current = readJson<ParentSettings>(PARENT_KEY, DEFAULT_PARENT_SETTINGS);
+  writeJson(PARENT_KEY, {
+    ...current,
+    ...(file.parent ?? {}),
+  } satisfies ParentSettings);
 }
 
 export function backupFilename(at = Date.now()): string {

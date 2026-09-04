@@ -8,6 +8,7 @@ import { saveSession } from '@/lib/db/repos/sessionRepo';
 import { getTopic } from '@/data/curriculum';
 import { registerAllGenerators } from '@/generators';
 import { InstallNudge } from '@/components/layout/InstallNudge';
+import { BackupBanner } from '@/components/layout/BackupBanner';
 import { paths } from '@/router';
 
 registerAllGenerators();
@@ -113,6 +114,9 @@ export function HomeRoute() {
 
       {/* Shown once she has actually used it — that is when it is worth asking. */}
       <InstallNudge show={today.streak >= 2 || today.answeredToday >= 5} />
+
+      {/* Only once there is something worth losing. */}
+      {today.mastery.size > 0 && <BackupBanner minDays={14} />}
 
       <div className="flex justify-center">
         <ProgressRing

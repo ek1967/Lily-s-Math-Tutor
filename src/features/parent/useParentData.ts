@@ -3,7 +3,7 @@ import { getAllMastery } from '@/lib/db/repos/masteryRepo';
 import { attemptsSince } from '@/lib/db/repos/attemptRepo';
 import { recentSessions } from '@/lib/db/repos/sessionRepo';
 import { materialBytes } from '@/lib/db/repos/materialRepo';
-import { storageEstimate } from '@/lib/db/open';
+import { dbStatus, isPersisted, storageEstimate } from '@/lib/db/open';
 import { getSpend } from '@/lib/ai/budget';
 import type { MasteryRecord } from '@/types/mastery';
 import type { Attempt, StudySession } from '@/types/session';
@@ -16,6 +16,10 @@ export interface ParentData {
   sessions: StudySession[];
   spend: SpendRecord;
   storage: { usage: number; quota: number; materials: number } | null;
+  /** null when the browser will not say. */
+  persisted: boolean | null;
+  /** 'unavailable' when the database could not be opened at all. */
+  dbState: 'ok' | 'unavailable' | null;
   reload: () => void;
 }
 
@@ -29,18 +33,22 @@ export function useParentData(): ParentData {
     sessions: [],
     spend: { month: '', agorot: 0, requests: 0 },
     storage: null,
+    persisted: null,
+    dbState: null,
   });
 
   const load = useCallback(async () => {
     try {
-      const [mastery, weekAttempts, sessions, spend, estimate, materials] = await Promise.all([
-        getAllMastery(),
-        attemptsSince(Date.now() - WEEK_MS),
-        recentSessions(20),
-        getSpend(),
-        storageEstimate(),
-        materialBytes(),
-      ]);
+      const [mastery, weekAttempts, sessions, spend, estimate, materials, persisted] =
+        await Promise.all([
+          getAllMastery(),
+          attemptsSince(Date.now() - WEEK_MS),
+          recentSessions(20),
+          getSpend(),
+          storageEstimate(),
+          materialBytes(),
+          isPersisted(),
+        ]);
       setState({
         loading: false,
         mastery,
@@ -48,6 +56,8 @@ export function useParentData(): ParentData {
         sessions,
         spend,
         storage: estimate ? { ...estimate, materials } : null,
+        persisted,
+        dbState: dbStatus(),
       });
     } catch {
       setState((s) => ({ ...s, loading: false }));

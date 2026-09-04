@@ -2,9 +2,10 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card } from '@/components/ui';
 import { PracticeRunner } from '@/features/practice/PracticeRunner';
-import { buildDiagnostic, applyDiagnostic } from '@/lib/srs/diagnostic';
-import { putMastery } from '@/lib/db/repos/masteryRepo';
+import { applyDiagnostic, buildDiagnostic, mergeDiagnostic } from '@/lib/srs/diagnostic';
+import { getMasteryMap, putMastery } from '@/lib/db/repos/masteryRepo';
 import { saveAttempts } from '@/lib/db/repos/attemptRepo';
+import { requestPersistentStorage } from '@/lib/db/open';
 import { registerAllGenerators } from '@/generators';
 import { getTopic } from '@/data/curriculum';
 import { useSettings } from '@/stores/settingsStore';
@@ -41,19 +42,31 @@ export function OnboardingRoute() {
 
   const exercises = useMemo(() => buildDiagnostic(Math.floor(Date.now() / 1000)), []);
 
-  const finishCheck = useCallback(
-    (records: readonly AttemptRecord[]) => {
-      const result = applyDiagnostic(records);
-      void saveAttempts(sessionId.current, records).catch(() => {});
-      void Promise.all(result.records.map((r) => putMastery(r))).catch(() => {});
-      setOutcome({
-        known: result.known.length,
-        gaps: result.gaps.map((id) => getTopic(id)?.titleHe ?? '').filter(Boolean),
-      });
-      setStep('result');
-    },
-    [],
-  );
+  const finishCheck = useCallback((records: readonly AttemptRecord[]) => {
+    const result = applyDiagnostic(records);
+
+    void (async () => {
+      try {
+        await saveAttempts(sessionId.current, records);
+        // Never write over topics she has already worked on — see mergeDiagnostic.
+        const existing = await getMasteryMap();
+        const { toWrite } = mergeDiagnostic(result.records, existing);
+        await Promise.all(toWrite.map((r) => putMastery(r)));
+      } catch {
+        /* Storage unavailable — the results still show on screen. */
+      } finally {
+        // Asked here too: a first-run student who does the check and closes the
+        // app would otherwise never have requested persistence at all.
+        void requestPersistentStorage();
+      }
+    })();
+
+    setOutcome({
+      known: result.known.length,
+      gaps: result.gaps.map((id) => getTopic(id)?.titleHe ?? '').filter(Boolean),
+    });
+    setStep('result');
+  }, []);
 
   const done = () => {
     set({ studentName: name.trim() || 'לילי', tutorName: tutorName.trim() || 'מיה', hasOnboarded: true });

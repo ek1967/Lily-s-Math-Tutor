@@ -30,12 +30,13 @@ export async function persistPractice(
     for (const [topicId, group] of byTopic) {
       await applyAttempts(topicId, group);
     }
-
-    // Asked for here rather than on first load: Safari evicts IndexedDB for
-    // sites unused for about a week, and the browser is far more likely to
-    // grant persistence after real engagement than to a page that just opened.
-    void requestPersistentStorage();
   } catch {
     /* Storage is unavailable — the session still happened. */
+  } finally {
+    // In `finally`, not at the end of the `try`: a write that throws is exactly
+    // the case where storage is under pressure, and that is precisely when the
+    // request matters most. Asked after real work rather than on first load,
+    // because the browser is far likelier to grant it to an engaged origin.
+    void requestPersistentStorage();
   }
 }

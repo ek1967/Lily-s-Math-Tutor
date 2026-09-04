@@ -1,10 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { applyDiagnostic, buildDiagnostic, diagnosticTopics } from '@/lib/srs/diagnostic';
+import { applyDiagnostic, buildDiagnostic, diagnosticTopics, mergeDiagnostic } from '@/lib/srs/diagnostic';
 import { registerAllGenerators } from '@/generators';
 import { TOPIC_BY_ID } from '@/data/curriculum';
 import { asTopicId, type TopicId } from '@/types/curriculum';
 import { asGeneratorId } from '@/types/exercise';
 import type { AttemptRecord } from '@/lib/practice/engine';
+import { newMastery, type MasteryRecord } from '@/types/mastery';
 
 beforeAll(() => registerAllGenerators());
 
@@ -103,5 +104,46 @@ describe('reading the results', () => {
 
   it('produces nothing from nothing', () => {
     expect(applyDiagnostic([])).toEqual({ known: [], gaps: [], records: [] });
+  });
+});
+
+describe('merging results into existing history', () => {
+  const FRACTIONS = asTopicId('num-fractions-add-sub');
+  const INTEGERS = asTopicId('num-integers-add-sub');
+  const TODAY = '2026-09-04';
+
+  const record = (id: TopicId, over: Partial<MasteryRecord> = {}): MasteryRecord => ({
+    ...newMastery(id, TODAY, 0),
+    ...over,
+  });
+
+  it('writes everything on a device with no history', () => {
+    const results = [record(FRACTIONS), record(INTEGERS)];
+    const { toWrite, kept } = mergeDiagnostic(results, new Map());
+    expect(toWrite).toHaveLength(2);
+    expect(kept).toEqual([]);
+  });
+
+  it('never writes over a topic she has actually worked on', () => {
+    // One placement question is a worse signal than dozens of practised
+    // exercises — and after a restore this guard is what stops the check
+    // erasing the history that was just recovered.
+    const existing = new Map([
+      [FRACTIONS, record(FRACTIONS, { introduced: true, level: 4, totalAttempts: 40 })],
+    ]);
+    const { toWrite, kept } = mergeDiagnostic([record(FRACTIONS), record(INTEGERS)], existing);
+    expect(kept).toEqual([FRACTIONS]);
+    expect(toWrite.map((r) => r.topicId)).toEqual([INTEGERS]);
+  });
+
+  it('treats an empty placeholder record as no history', () => {
+    const existing = new Map([[FRACTIONS, record(FRACTIONS)]]);
+    const { toWrite } = mergeDiagnostic([record(FRACTIONS)], existing);
+    expect(toWrite).toHaveLength(1);
+  });
+
+  it('protects a topic with attempts even if never formally introduced', () => {
+    const existing = new Map([[FRACTIONS, record(FRACTIONS, { totalAttempts: 6 })]]);
+    expect(mergeDiagnostic([record(FRACTIONS)], existing).kept).toEqual([FRACTIONS]);
   });
 });

@@ -4,6 +4,7 @@ import { Button, Card, Icon } from '@/components/ui';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { PinGate } from '@/features/parent/PinGate';
 import { DataTools } from '@/features/parent/DataTools';
+import { StorageHealth } from '@/features/parent/StorageHealth';
 import {
   masteredTopics,
   minutesFrom,
@@ -247,6 +248,7 @@ export function ParentRoute() {
 
       {tab === 'data' && (
         <>
+          <StorageHealth persisted={data.persisted} dbState={data.dbState} />
           <DataTools storage={data.storage} onRestored={data.reload} />
           <Card>
             <h2 className="mb-2 text-lg">פרטיות</h2>

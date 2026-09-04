@@ -8,6 +8,7 @@ import { resetClient } from '@/lib/ai/client';
 import { MODELS } from '@/lib/ai/models';
 import { Link } from 'react-router-dom';
 import { paths } from '@/router';
+import { BackupBanner } from '@/components/layout/BackupBanner';
 
 const MODES: { value: ThemeMode; label: string }[] = [
   { value: 'light', label: 'בהיר' },
@@ -56,6 +57,8 @@ export function SettingsRoute() {
           ))}
         </div>
       </Card>
+
+      <BackupBanner />
 
       <Link
         to={paths.parent()}

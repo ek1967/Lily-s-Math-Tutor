@@ -75,6 +75,35 @@ export interface DiagnosticOutcome {
 }
 
 /**
+ * Filters the results down to the records it is safe to write.
+ *
+ * A single placement question is one data point; a mastery level built from
+ * dozens of practised exercises is a far better one. So the check never
+ * overwrites a topic she has actually worked on — it exists to find gaps in
+ * topics nothing is known about yet.
+ *
+ * This also closes a data-losing path: after a restore the app can find itself
+ * back in onboarding, and without this guard the placement check would write
+ * over the very history that had just been recovered.
+ */
+export function mergeDiagnostic(
+  results: readonly MasteryRecord[],
+  existing: ReadonlyMap<TopicId, MasteryRecord>,
+): { toWrite: MasteryRecord[]; kept: TopicId[] } {
+  const toWrite: MasteryRecord[] = [];
+  const kept: TopicId[] = [];
+
+  for (const record of results) {
+    const prior = existing.get(record.topicId);
+    const hasHistory = prior !== undefined && (prior.introduced || prior.totalAttempts > 0);
+    if (hasHistory) kept.push(record.topicId);
+    else toWrite.push(record);
+  }
+
+  return { toWrite, kept };
+}
+
+/**
  * Turns the results into a starting point.
  *
  * A topic she got right is marked known and scheduled for a light review; one

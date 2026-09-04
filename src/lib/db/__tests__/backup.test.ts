@@ -87,6 +87,66 @@ describe('backup round trip', () => {
     expect([...decoded].map((c) => c.charCodeAt(0))).toEqual([...bytes]);
   });
 
+  it('restores the settings, so a recovered device is not treated as new', async () => {
+    // This is the bug that made the backup worthless: only the database came
+    // back, `hasOnboarded` stayed false, the app redirected into onboarding,
+    // and the placement check wrote over the history just recovered.
+    localStorage.setItem(
+      'lmt.settings.v1',
+      JSON.stringify({ studentName: 'לילי', tutorName: 'מיה', hasOnboarded: true, themeColor: 'teal' }),
+    );
+    const exported = await exportAll(false);
+
+    localStorage.clear();
+    await importAll(exported);
+
+    const restored = JSON.parse(localStorage.getItem('lmt.settings.v1')!);
+    expect(restored.hasOnboarded).toBe(true);
+    expect(restored.studentName).toBe('לילי');
+    expect(restored.themeColor).toBe('teal');
+  });
+
+  it('marks a restored device as onboarded even if the file said otherwise', async () => {
+    localStorage.setItem('lmt.settings.v1', JSON.stringify({ hasOnboarded: false }));
+    const exported = await exportAll(false);
+    localStorage.clear();
+    await importAll(exported);
+    expect(JSON.parse(localStorage.getItem('lmt.settings.v1')!).hasOnboarded).toBe(true);
+  });
+
+  it('carries the backup date and budget but never the PIN', async () => {
+    // A hash of a four-digit code is broken in a second, and the file gets
+    // sent over WhatsApp. The PIN guards nothing secret, so it is re-set.
+    localStorage.setItem(
+      'lmt.parent.v1',
+      JSON.stringify({
+        pinHash: 'deadbeef',
+        pinSalt: 'cafe',
+        lastExportAt: 1700000000000,
+        monthlyBudgetAgorot: 7500,
+      }),
+    );
+    const exported = await exportAll(false);
+    expect(JSON.stringify(exported)).not.toContain('deadbeef');
+    expect(JSON.stringify(exported)).not.toContain('cafe');
+    expect(exported.parent).toEqual({ lastExportAt: 1700000000000, monthlyBudgetAgorot: 7500 });
+  });
+
+  it('keeps this device’s PIN when restoring', async () => {
+    localStorage.setItem('lmt.parent.v1', JSON.stringify({ pinHash: 'x', pinSalt: 'y', lastExportAt: null, monthlyBudgetAgorot: 5000 }));
+    const exported = await exportAll(false);
+    await importAll(exported);
+    const parent = JSON.parse(localStorage.getItem('lmt.parent.v1')!);
+    expect(parent.pinHash).toBe('x');
+  });
+
+  it('still reads a backup written by the previous version', async () => {
+    const exported = await exportAll(false);
+    const v1 = { ...exported, version: 1 };
+    delete (v1 as { parent?: unknown }).parent;
+    await expect(importAll(v1)).resolves.toBeDefined();
+  });
+
   it('leaves the API key out of the file', async () => {
     // A backup gets emailed to yourself or dropped in a shared folder; it must
     // never carry a live credential.
