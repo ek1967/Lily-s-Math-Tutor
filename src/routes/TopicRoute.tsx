@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button, Card, Icon } from '@/components/ui';
 import { STRAND_BY_ID, getTopic } from '@/data/curriculum';
@@ -6,6 +7,10 @@ import { asTopicId } from '@/types/curriculum';
 import { generatorsForTopic, registerAllGenerators } from '@/generators';
 import { getAuthoredLesson } from '@/data/lessons';
 import { LessonView } from '@/features/learn/LessonView';
+import { resolveLesson } from '@/lib/ai/lessonGen';
+import { hasApiKey } from '@/lib/security/apiKey';
+import { useSettings } from '@/stores/settingsStore';
+import type { LessonContent } from '@/types/content';
 import { paths } from '@/router';
 import { NotFoundRoute } from './NotFoundRoute';
 
@@ -20,7 +25,6 @@ export function TopicRoute() {
   const strand = STRAND_BY_ID.get(topic.strand);
   const direct = topic.prerequisites.map(getTopic).filter((t) => t !== undefined);
   const hasExercises = generatorsForTopic(topic.id).length > 0;
-  const lesson = getAuthoredLesson(topic.id);
 
   return (
     <div className="space-y-5">
@@ -81,7 +85,7 @@ export function TopicRoute() {
         </Card>
       )}
 
-      {lesson && <LessonView lesson={lesson} />}
+      <TopicLesson topicId={topic.id} />
 
       <Button
         size="hero"
@@ -95,5 +99,62 @@ export function TopicRoute() {
         <p className="text-center text-sm text-ink-soft">התרגילים לנושא הזה בדרך.</p>
       )}
     </div>
+  );
+}
+
+/**
+ * A topic either has hand-written teaching, a lesson generated earlier and
+ * cached, or none yet. Only the last case needs a request, and it happens once
+ * per topic — after that it is on the device and works offline.
+ */
+function TopicLesson({ topicId }: { topicId: import('@/types/curriculum').TopicId }) {
+  const { settings } = useSettings();
+  const authored = getAuthoredLesson(topicId);
+  const [lesson, setLesson] = useState<LessonContent | null>(authored ?? null);
+  const [state, setState] = useState<'idle' | 'loading' | 'failed'>('idle');
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    setLesson(getAuthoredLesson(topicId) ?? null);
+    setState('idle');
+  }, [topicId]);
+
+  if (lesson) return <LessonView lesson={lesson} />;
+
+  const topic = getTopic(topicId);
+  if (!topic) return null;
+
+  const write = async () => {
+    setState('loading');
+    const result = await resolveLesson(topic, settings.studentName, settings.model);
+    if (result.status === 'ok') {
+      setLesson(result.lesson);
+      setState('idle');
+    } else {
+      setMessage(result.error.he);
+      setState('failed');
+    }
+  };
+
+  return (
+    <Card className="text-center">
+      {state === 'loading' ? (
+        <p className="text-ink-soft">רגע, כותבת לך הסבר…</p>
+      ) : (
+        <>
+          <p>לנושא הזה עוד אין הסבר כתוב.</p>
+          {state === 'failed' && <p className="mt-2 text-almost">{message}</p>}
+          {hasApiKey() ? (
+            <Button className="mt-3" onClick={() => void write()}>
+              {state === 'failed' ? 'לנסות שוב' : 'שהמורה תכתוב לי הסבר'}
+            </Button>
+          ) : (
+            <p className="mt-2 text-sm text-ink-soft">
+              אפשר לתרגל אותו גם ככה, או להוסיף מפתח בהגדרות כדי שהמורה תכתוב הסבר.
+            </p>
+          )}
+        </>
+      )}
+    </Card>
   );
 }

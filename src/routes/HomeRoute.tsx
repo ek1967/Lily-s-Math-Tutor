@@ -116,11 +116,19 @@ export function HomeRoute() {
         <SecondaryCard to={paths.homework()} icon="camera" label="שיעורי בית" />
         <SecondaryCard
           to={paths.review()}
-          icon="spark"
+          icon="check"
           label="חזרה"
           badge={today.plan.review.length}
         />
         <SecondaryCard to={paths.learn()} icon="book" label="נושא לבחירתי" />
+      </div>
+
+      <div className="grid grid-cols-1">
+        <SecondaryCard
+          to={paths.chat(`free-${Date.now().toString(36)}`)}
+          icon="spark"
+          label={`שאלה מהירה ל${settings.tutorName}`}
+        />
       </div>
     </div>
   );
@@ -138,7 +146,7 @@ function SecondaryCard({
   badge = 0,
 }: {
   to: string;
-  icon: 'camera' | 'book' | 'spark';
+  icon: 'camera' | 'book' | 'spark' | 'check';
   label: string;
   badge?: number;
 }) {

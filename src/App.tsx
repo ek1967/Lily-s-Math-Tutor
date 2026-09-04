@@ -6,6 +6,7 @@ import { TopicRoute } from '@/routes/TopicRoute';
 import { PracticeRoute } from '@/routes/PracticeRoute';
 import { ReviewRoute } from '@/routes/ReviewRoute';
 import { StudyRoute } from '@/routes/StudyRoute';
+import { ChatRoute } from '@/routes/ChatRoute';
 import { HomeworkRoute } from '@/routes/HomeworkRoute';
 import { SettingsRoute } from '@/routes/SettingsRoute';
 import { DevGeneratorsRoute } from '@/routes/DevGeneratorsRoute';
@@ -28,6 +29,7 @@ export function App() {
           <Route path="/practice/:topicId" element={<PracticeRoute />} />
           <Route path="/review" element={<ReviewRoute />} />
           <Route path="/study/:sessionId" element={<StudyRoute />} />
+          <Route path="/chat/:threadId" element={<ChatRoute />} />
           <Route path="/dev/generators" element={<DevGeneratorsRoute />} />
           <Route path="*" element={<NotFoundRoute />} />
         </Routes>

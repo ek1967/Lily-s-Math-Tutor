@@ -124,6 +124,11 @@ export function StudyRoute() {
       breatherAt={breatherFor(exercises.length)}
       summaryNote={titles ? `היום עבדנו על ${titles}` : undefined}
       onProgress={onProgress}
+      onAskTutor={(exercise) =>
+        navigate(
+          `${paths.chat(`stuck-${Date.now().toString(36)}`)}?exercise=${encodeURIComponent(exercise.id)}`,
+        )
+      }
       onFinish={onFinish}
       onExit={() => navigate(paths.home())}
     />

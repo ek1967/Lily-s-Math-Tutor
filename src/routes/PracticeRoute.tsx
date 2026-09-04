@@ -47,6 +47,11 @@ export function PracticeRoute() {
       exercises={exercises}
       title={topic.titleHe}
       onExit={() => navigate(paths.topic(topic.id))}
+      onAskTutor={(exercise) =>
+        navigate(
+          `${paths.chat(`stuck-${Date.now().toString(36)}`)}?exercise=${encodeURIComponent(exercise.id)}`,
+        )
+      }
       onFinish={(records) => void persistPractice(sessionId.current, records)}
     />
   );

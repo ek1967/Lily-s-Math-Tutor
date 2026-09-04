@@ -26,6 +26,8 @@ interface Props {
   startIndex?: number;
   /** Called whenever she moves on, so progress can be written to storage. */
   onProgress?: (index: number) => void;
+  /** Offered after three wrong answers, with the exercise as context. */
+  onAskTutor?: (exercise: Exercise) => void;
 }
 
 /** How long a correct answer stays on screen before moving on. Long enough to
@@ -41,6 +43,7 @@ export function PracticeRunner({
   summaryNote,
   startIndex = 0,
   onProgress,
+  onAskTutor,
 }: Props) {
   const [state, dispatch] = useReducer(
     practiceReducer,
@@ -125,6 +128,14 @@ export function PracticeRunner({
             submitLabel={state.phase === 'almost' ? 'לנסות שוב' : 'בדיקה'}
             submitDisabled={false}
           />
+        )}
+
+        {isStuck(state) && !answered && onAskTutor && (
+          // Three wrong in a row is the moment to change something, not to ask
+          // a fourth time. The exercise goes with her into the conversation.
+          <Button variant="ghost" block onClick={() => onAskTutor(ex)}>
+            לשאול את המורה
+          </Button>
         )}
 
         {canReveal(state) && !answered && (

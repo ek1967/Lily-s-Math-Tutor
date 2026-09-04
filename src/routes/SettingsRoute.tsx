@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { Card } from '@/components/ui';
+import { Button, Card } from '@/components/ui';
 import { useSettings } from '@/stores/settingsStore';
 import { THEME_COLORS, type FontScale, type ThemeMode } from '@/types/settings';
+import { clearApiKey, getApiKey, looksLikeApiKey, maskApiKey, setApiKey } from '@/lib/security/apiKey';
+import { resetClient } from '@/lib/ai/client';
+import { MODELS } from '@/lib/ai/models';
 
 const MODES: { value: ThemeMode; label: string }[] = [
   { value: 'light', label: 'בהיר' },
@@ -48,6 +52,42 @@ export function SettingsRoute() {
               ].join(' ')}
             />
           ))}
+        </div>
+      </Card>
+
+      <ApiKeyPanel />
+
+      <Card>
+        <h2 className="mb-3 text-lg">המורה</h2>
+        <label className="block">
+          <span className="mb-1 block text-sm text-ink-soft">שם המורה</span>
+          <input
+            value={settings.tutorName}
+            onChange={(e) => set({ tutorName: e.target.value })}
+            className="tap w-full rounded-md border border-line bg-surface px-3 py-2"
+          />
+        </label>
+        <div className="mt-4">
+          <div className="mb-2 text-sm text-ink-soft">איזה מודל להשתמש</div>
+          <div className="space-y-2">
+            {MODELS.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                aria-pressed={settings.model === m.id}
+                onClick={() => set({ model: m.id })}
+                className={[
+                  'tap w-full rounded-md px-3 py-3 text-start transition',
+                  settings.model === m.id
+                    ? 'bg-primary-tint text-primary-strong'
+                    : 'bg-surface-2 hover:bg-primary-tint/60',
+                ].join(' ')}
+              >
+                <span className="block font-medium">{m.labelHe}</span>
+                <span className="block text-sm text-ink-soft">{m.descriptionHe}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </Card>
 
@@ -122,5 +162,93 @@ function Choice<T extends string>({
         ))}
       </div>
     </div>
+  );
+}
+
+/**
+ * The key panel. It is blunt about what storing a key in a browser means,
+ * because a parent deciding whether to paste one deserves to know — and the
+ * mitigation that actually bounds the risk is theirs to apply, not ours.
+ */
+function ApiKeyPanel() {
+  const [stored, setStored] = useState(() => getApiKey());
+  const [draft, setDraft] = useState('');
+  const [error, setError] = useState('');
+
+  const save = () => {
+    if (!looksLikeApiKey(draft)) {
+      setError('המפתח אמור להתחיל ב-sk-ant. כדאי להעתיק אותו שוב.');
+      return;
+    }
+    setApiKey(draft);
+    resetClient();
+    setStored(getApiKey());
+    setDraft('');
+    setError('');
+  };
+
+  const remove = () => {
+    clearApiKey();
+    resetClient();
+    setStored(null);
+  };
+
+  return (
+    <Card>
+      <h2 className="mb-1 text-lg">חיבור המורה</h2>
+      <p className="mb-3 text-sm text-ink-soft">
+        התרגול והשיעורים עובדים בלי זה. המפתח נדרש רק לצ׳אט עם המורה ולעזרה
+        בשיעורי בית.
+      </p>
+
+      {stored ? (
+        <div className="flex items-center justify-between gap-3 rounded-md bg-surface-2 px-3 py-3">
+          <span dir="ltr" className="ltr truncate font-mono text-sm">
+            {maskApiKey(stored)}
+          </span>
+          <Button size="sm" variant="ghost" onClick={remove}>
+            הסרה
+          </Button>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          <input
+            type="password"
+            value={draft}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              setError('');
+            }}
+            dir="ltr"
+            placeholder="sk-ant-..."
+            autoComplete="off"
+            className="ltr w-full rounded-md border border-line bg-surface px-3 py-2 font-mono text-sm"
+          />
+          {error && <p className="text-sm text-almost">{error}</p>}
+          <Button block onClick={save} disabled={draft.trim() === ''}>
+            שמירה
+          </Button>
+        </div>
+      )}
+
+      <details className="mt-3">
+        <summary className="tap cursor-pointer text-sm text-primary">
+          איפה משיגים מפתח, ומה חשוב לדעת
+        </summary>
+        <div className="mt-2 space-y-2 text-sm text-ink-soft">
+          <p>
+            נכנסים לקונסולה של Anthropic, יוצרים מפתח חדש, ומעתיקים אותו לכאן.
+          </p>
+          <p>
+            המפתח נשמר בדפדפן של המכשיר הזה בלבד ולא נשלח לשום מקום חוץ מ-Anthropic.
+            עם זאת — מי שיש לו גישה למכשיר יכול לקרוא אותו.
+          </p>
+          <p>
+            לכן כדאי ליצור מפתח ייעודי לאפליקציה הזו ולהגדיר לו תקרת הוצאה חודשית
+            בקונסולה. כך המקרה הגרוע ביותר הוא חשבון שנעצר, ולא הפתעה בסוף החודש.
+          </p>
+        </div>
+      </details>
+    </Card>
   );
 }

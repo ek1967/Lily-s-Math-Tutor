@@ -12,7 +12,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.71.0",
+    "@anthropic-ai/sdk": "^0.123.0",
     "dexie": "^4.0.11",
     "katex": "^0.16.22",
     "react": "^18.3.1",
