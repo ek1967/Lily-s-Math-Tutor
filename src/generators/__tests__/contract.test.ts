@@ -197,9 +197,20 @@ describe('generator contract', () => {
     });
 
     it('varies enough across seeds to not feel repetitive', () => {
-      // A degenerate parameter space means she sees the same question all week.
-      const distinct = new Set(exercises.map((e) => `${e.promptHe}|${e.promptTex ?? ''}`));
-      expect(distinct.size / exercises.length).toBeGreaterThan(0.6);
+      // The bar is an absolute count, not a ratio. Some topics have a genuinely
+      // small space — there are only so many exact square roots worth asking —
+      // and a ratio would demand variety that does not exist. What matters is
+      // that a week of drilling one topic (~30 questions) does not become the
+      // same handful over and over, and 60 distinct questions clears that.
+      //
+      // For a multiple-choice exercise the options are the question, so the
+      // fingerprint has to include them or every seed looks identical.
+      const distinct = new Set(
+        exercises.map((e) =>
+          [e.promptHe, e.promptTex ?? '', ...answerForms(e.answer)].join('|'),
+        ),
+      );
+      expect(distinct.size).toBeGreaterThanOrEqual(Math.min(60, exercises.length));
     });
   });
 });

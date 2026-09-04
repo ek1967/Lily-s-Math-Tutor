@@ -1,7 +1,19 @@
 import { registerGenerator } from './registry';
 import { fractionsAddSubGenerators } from './topics/num-fractions-add-sub.gen';
+import { fractionsCompareGenerators } from './topics/num-fractions-compare.gen';
+import { fractionsMulDivGenerators } from './topics/num-fractions-mul-div.gen';
+import { integersMulDivGenerators } from './topics/num-integers-mul-div.gen';
+import { percentBasicsGenerators } from './topics/num-percent-basics.gen';
 import { integersAddSubGenerators } from './topics/num-integers-add-sub.gen';
 import { linearEqBasicGenerators } from './topics/alg-linear-eq-basic.gen';
+import { expressionsSubstituteGenerators } from './topics/alg-expressions-substitute.gen';
+import { collectLikeTermsGenerators } from './topics/alg-collect-like-terms.gen';
+import { distributiveGenerators } from './topics/alg-distributive.gen';
+import { coordinatePlaneGenerators } from './topics/fun-coordinate-plane.gen';
+import { squareRootsGenerators } from './topics/num-square-roots.gen';
+import { pythagorasGenerators } from './topics/geo-pythagoras.gen';
+import { areaPerimeterGenerators } from './topics/geo-area-perimeter.gen';
+import { meanMedianModeGenerators } from './topics/sta-mean-median-mode.gen';
 
 /**
  * Every generator file is imported and registered here by hand. Explicit beats
@@ -16,8 +28,20 @@ export function registerAllGenerators(): void {
   registered = true;
   for (const gen of [
     ...integersAddSubGenerators,
+    ...integersMulDivGenerators,
+    ...fractionsCompareGenerators,
     ...fractionsAddSubGenerators,
+    ...fractionsMulDivGenerators,
+    ...percentBasicsGenerators,
+    ...squareRootsGenerators,
+    ...expressionsSubstituteGenerators,
+    ...collectLikeTermsGenerators,
+    ...distributiveGenerators,
     ...linearEqBasicGenerators,
+    ...coordinatePlaneGenerators,
+    ...areaPerimeterGenerators,
+    ...pythagorasGenerators,
+    ...meanMedianModeGenerators,
   ]) {
     registerGenerator(gen);
   }
