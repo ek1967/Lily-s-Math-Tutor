@@ -52,6 +52,24 @@ export function SettingsRoute() {
       </Card>
 
       <Card>
+        <h2 className="mb-3 text-lg">לימוד</h2>
+        <label className="tap flex items-center justify-between gap-4">
+          <span>
+            <span className="block">להציג גם נושאי העשרה</span>
+            <span className="block text-sm text-ink-soft">
+              נושאים מתקדמים שלא חייבים כרגע. כבוי כברירת מחדל.
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            checked={settings.showExtensionTopics}
+            onChange={(e) => set({ showExtensionTopics: e.target.checked })}
+            className="h-6 w-6 shrink-0 accent-[rgb(var(--c-primary))]"
+          />
+        </label>
+      </Card>
+
+      <Card>
         <h2 className="mb-3 text-lg">תצוגה</h2>
         <Choice
           label="מצב"

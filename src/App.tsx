@@ -2,6 +2,7 @@ import { HashRouter, Route, Routes } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
 import { HomeRoute } from '@/routes/HomeRoute';
 import { LearnRoute } from '@/routes/LearnRoute';
+import { TopicRoute } from '@/routes/TopicRoute';
 import { HomeworkRoute } from '@/routes/HomeworkRoute';
 import { SettingsRoute } from '@/routes/SettingsRoute';
 import { NotFoundRoute } from '@/routes/NotFoundRoute';
@@ -17,6 +18,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<HomeRoute />} />
           <Route path="/learn" element={<LearnRoute />} />
+          <Route path="/learn/:topicId" element={<TopicRoute />} />
           <Route path="/homework" element={<HomeworkRoute />} />
           <Route path="/settings" element={<SettingsRoute />} />
           <Route path="*" element={<NotFoundRoute />} />
