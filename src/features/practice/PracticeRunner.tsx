@@ -8,8 +8,8 @@ import { BreatherCard } from '@/components/feedback/BreatherCard';
 import { MathBlock } from '@/lib/math/Katex';
 import { ALMOST, PRAISE, RECOVERED, STUCK, pickPhrase } from '@/data/encouragement';
 import {
-  canHint, canReveal, currentExercise, initPractice, isStuck, practiceReducer,
-  practiceStats, type AttemptRecord, type PracticeState,
+  canHint, canReveal, currentExercise, initPractice, isStuck, partiallyAnswered,
+  practiceReducer, practiceStats, type AttemptRecord, type PracticeState,
 } from '@/lib/practice/engine';
 import type { Exercise } from '@/types/exercise';
 
@@ -199,7 +199,9 @@ function FeedbackBar({ state }: { state: PracticeState }) {
   if (state.unreadable) {
     return (
       <p className="animate-pop-in text-center text-ink-soft">
-        רק צריך לכתוב תשובה קודם
+        {partiallyAnswered(state)
+          ? 'צריך למלא גם את המשבצת השנייה'
+          : 'רק צריך לכתוב תשובה קודם'}
       </p>
     );
   }

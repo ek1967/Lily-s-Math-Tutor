@@ -106,6 +106,21 @@ export function SettingsRoute() {
 
       <Card>
         <h2 className="mb-3 text-lg">לימוד</h2>
+        <label className="tap mb-4 flex items-center justify-between gap-4">
+          <span>
+            <span className="block">הקראה בקול</span>
+            <span className="block text-sm text-ink-soft">
+              כפתור שמקריא הסברים ורמזים. עוזר כשקשה להתרכז בקריאה.
+            </span>
+          </span>
+          <input
+            type="checkbox"
+            checked={settings.speechEnabled}
+            onChange={(e) => set({ speechEnabled: e.target.checked })}
+            className="h-6 w-6 shrink-0 accent-[rgb(var(--c-primary))]"
+          />
+        </label>
+
         <label className="tap flex items-center justify-between gap-4">
           <span>
             <span className="block">להציג גם נושאי העשרה</span>

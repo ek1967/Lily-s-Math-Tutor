@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import {
-  canHint, canReveal, currentExercise, initPractice, isStuck, practiceReducer,
-  practiceStats, type PracticeAction, type PracticeState,
+  canHint, canReveal, currentExercise, initPractice, isStuck, partiallyAnswered,
+  practiceReducer, practiceStats, type PracticeAction, type PracticeState,
 } from '@/lib/practice/engine';
 import { getGenerator, registerAllGenerators } from '@/generators';
 import { createExercise } from '@/generators/make';
@@ -234,6 +234,17 @@ describe('practice engine', () => {
     s = typeCorrectAnswer(s);
     s = run(s, { type: 'submit', now: 4 }, { type: 'next', now: 5 });
     expect(s.phase).toBe('done');
+  });
+
+  it('points at the blank box when only one of two is filled', () => {
+    // "Write something first" is confusing when she has written something —
+    // the message and the focus both need to name the box that is missing.
+    const gen = getGenerator(asGeneratorId('num-fractions-add-sub/same-denominator'))!;
+    let s = initPractice([createExercise(gen, 5)], 0);
+    s = run(s, { type: 'setValue', value: ['3', ''] }, { type: 'submit', now: 1 });
+    expect(s.unreadable).toBe(true);
+    expect(partiallyAnswered(s)).toBe(true);
+    expect(s.activePart).toBe(1);
   });
 
   it('ignores input once the exercise is resolved', () => {

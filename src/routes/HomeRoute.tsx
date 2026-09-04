@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Card, Icon, ProgressRing } from '@/components/ui';
 import { useSettings } from '@/stores/settingsStore';
@@ -7,6 +7,7 @@ import { buildDailyBlueprint, newDailySession } from '@/features/daily/buildDail
 import { saveSession } from '@/lib/db/repos/sessionRepo';
 import { getTopic } from '@/data/curriculum';
 import { registerAllGenerators } from '@/generators';
+import { InstallNudge } from '@/components/layout/InstallNudge';
 import { paths } from '@/router';
 
 registerAllGenerators();
@@ -28,6 +29,12 @@ export function HomeRoute() {
   const { settings } = useSettings();
   const navigate = useNavigate();
   const today = useToday();
+
+  // First run goes through onboarding, which ends by seeding her mastery from
+  // a short placement check.
+  useEffect(() => {
+    if (!settings.hasOnboarded) navigate(paths.onboarding(), { replace: true });
+  }, [settings.hasOnboarded, navigate]);
 
   const focusTopic = today.plan.focus ? getTopic(today.plan.focus) : undefined;
   const blockingTopic = today.plan.blocking ? getTopic(today.plan.blocking) : undefined;
@@ -103,6 +110,9 @@ export function HomeRoute() {
           </p>
         </Card>
       )}
+
+      {/* Shown once she has actually used it — that is when it is worth asking. */}
+      <InstallNudge show={today.streak >= 2 || today.answeredToday >= 5} />
 
       <div className="flex justify-center">
         <ProgressRing

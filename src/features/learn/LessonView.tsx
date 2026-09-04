@@ -1,4 +1,4 @@
-import { Card } from '@/components/ui';
+import { Card, SpeakButton } from '@/components/ui';
 import { RichBlocks } from '@/components/content/RichBlocks';
 import { WorkedExampleCard } from '@/components/content/WorkedExampleCard';
 import { MathInline } from '@/lib/math/Katex';
@@ -17,6 +17,10 @@ export function LessonView({ lesson }: { lesson: LessonContent }) {
       </Card>
 
       <Card>
+        <div className="mb-2 flex justify-end">
+          {/* Only the Hebrew prose is read: a formula spoken aloud is noise. */}
+          <SpeakButton text={spokenText(lesson)} labelHe="להקריא לי" />
+        </div>
         <RichBlocks blocks={lesson.explanation} />
       </Card>
 
@@ -68,4 +72,20 @@ export function LessonView({ lesson }: { lesson: LessonContent }) {
       )}
     </div>
   );
+}
+
+/** Collects the Hebrew sentences of a lesson, skipping every formula. */
+function spokenText(lesson: LessonContent): string {
+  const parts: string[] = [lesson.hookHe];
+  for (const block of lesson.explanation) {
+    if (block.kind === 'text' || block.kind === 'callout') parts.push(block.he);
+    else if (block.kind === 'mixed') {
+      for (const p of block.parts) if ('he' in p) parts.push(p.he);
+    } else if (block.kind === 'list') {
+      for (const item of block.items) {
+        if (item.kind === 'text' || item.kind === 'callout') parts.push(item.he);
+      }
+    }
+  }
+  return parts.join('. ');
 }

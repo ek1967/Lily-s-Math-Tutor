@@ -1,6 +1,6 @@
 import type { Hint } from '@/types/exercise';
 import { TextWithMath } from '@/lib/math/Katex';
-import { Button } from '@/components/ui';
+import { Button, SpeakButton } from '@/components/ui';
 
 /**
  * Three hints, one tap each, each its own calm card. Using a hint costs her
@@ -28,6 +28,7 @@ export function HintLadder({
         >
           <span className="me-2 text-sm opacity-75">רמז {h.level}</span>
           <TextWithMath he={h.he} tex={h.tex} />
+          <SpeakButton text={h.he} />
         </div>
       ))}
 

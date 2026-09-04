@@ -106,6 +106,15 @@ export const isStuck = (s: PracticeState): boolean => s.wrongTries >= 3;
 export const hasAnswer = (s: PracticeState): boolean =>
   s.value.length > 0 && s.value.every((v) => v.trim() !== '');
 
+/** Index of the first blank field, or -1. Lets the UI say *which* box is empty
+ *  on a two-part answer, instead of claiming she has written nothing. */
+export const firstEmptyPart = (s: PracticeState): number =>
+  s.value.findIndex((v) => v.trim() === '');
+
+/** True when she has filled something but not everything. */
+export const partiallyAnswered = (s: PracticeState): boolean =>
+  s.value.some((v) => v.trim() !== '') && s.value.some((v) => v.trim() === '');
+
 function submittedText(s: PracticeState): string | string[] {
   const ex = currentExercise(s);
   if (ex?.input.kind === 'fraction') {
@@ -168,7 +177,10 @@ export function practiceReducer(s: PracticeState, action: PracticeAction): Pract
 
     case 'submit': {
       if (!ex || (s.phase !== 'answering' && s.phase !== 'almost')) return s;
-      if (!hasAnswer(s)) return { ...s, unreadable: true };
+      if (!hasAnswer(s)) {
+        const blank = firstEmptyPart(s);
+        return { ...s, unreadable: true, activePart: blank >= 0 ? blank : s.activePart };
+      }
 
       const verdict: Verdict = checkAnswer(ex.answer, submittedText(s));
       if (verdict.unparsed) return { ...s, unreadable: true };
