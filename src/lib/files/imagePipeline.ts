@@ -57,7 +57,19 @@ function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
 }
 
 export async function blobToBase64(blob: Blob): Promise<string> {
-  const buffer = await blob.arrayBuffer();
+  // Blob.arrayBuffer arrived in Safari 14; FileReader has always been there,
+  // and an iPhone a couple of versions behind is exactly the device this runs
+  // on. jsdom is missing it too, which is how the gap showed up.
+  const buffer =
+    typeof blob.arrayBuffer === 'function'
+      ? await blob.arrayBuffer()
+      : await new Promise<ArrayBuffer>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as ArrayBuffer);
+          reader.onerror = () => reject(reader.error ?? new Error('read failed'));
+          reader.readAsArrayBuffer(blob);
+        });
+
   let binary = '';
   const bytes = new Uint8Array(buffer);
   const CHUNK = 0x8000;

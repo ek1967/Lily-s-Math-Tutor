@@ -6,6 +6,8 @@ import { THEME_COLORS, type FontScale, type ThemeMode } from '@/types/settings';
 import { clearApiKey, getApiKey, looksLikeApiKey, maskApiKey, setApiKey } from '@/lib/security/apiKey';
 import { resetClient } from '@/lib/ai/client';
 import { MODELS } from '@/lib/ai/models';
+import { Link } from 'react-router-dom';
+import { paths } from '@/router';
 
 const MODES: { value: ThemeMode; label: string }[] = [
   { value: 'light', label: 'בהיר' },
@@ -54,6 +56,17 @@ export function SettingsRoute() {
           ))}
         </div>
       </Card>
+
+      <Link
+        to={paths.parent()}
+        className="card tap flex items-center justify-between p-4 hover:bg-surface-2"
+      >
+        <span>
+          <span className="block font-medium">מסך הורים</span>
+          <span className="block text-sm text-ink-soft">התקדמות, עלות וגיבוי</span>
+        </span>
+        <span aria-hidden="true" className="text-ink-soft">←</span>
+      </Link>
 
       <ApiKeyPanel />
 

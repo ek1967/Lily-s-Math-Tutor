@@ -20,6 +20,7 @@ const ChatRoute = lazy(() => import('@/routes/ChatRoute').then((m) => ({ default
 const HomeworkRoute = lazy(() => import('@/routes/HomeworkRoute').then((m) => ({ default: m.HomeworkRoute })));
 const MaterialRoute = lazy(() => import('@/routes/MaterialRoute').then((m) => ({ default: m.MaterialRoute })));
 const SettingsRoute = lazy(() => import('@/routes/SettingsRoute').then((m) => ({ default: m.SettingsRoute })));
+const ParentRoute = lazy(() => import('@/routes/ParentRoute').then((m) => ({ default: m.ParentRoute })));
 const DevGeneratorsRoute = lazy(() => import('@/routes/DevGeneratorsRoute').then((m) => ({ default: m.DevGeneratorsRoute })));
 const NotFoundRoute = lazy(() => import('@/routes/NotFoundRoute').then((m) => ({ default: m.NotFoundRoute })));
 
@@ -41,6 +42,7 @@ export function App() {
             <Route path="/homework" element={<HomeworkRoute />} />
             <Route path="/homework/:materialId" element={<MaterialRoute />} />
             <Route path="/settings" element={<SettingsRoute />} />
+            <Route path="/parent" element={<ParentRoute />} />
             <Route path="/dev/generators" element={<DevGeneratorsRoute />} />
             <Route path="*" element={<NotFoundRoute />} />
           </Routes>
