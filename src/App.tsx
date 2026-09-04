@@ -3,6 +3,7 @@ import { AppShell } from '@/components/layout/AppShell';
 import { HomeRoute } from '@/routes/HomeRoute';
 import { LearnRoute } from '@/routes/LearnRoute';
 import { TopicRoute } from '@/routes/TopicRoute';
+import { PracticeRoute } from '@/routes/PracticeRoute';
 import { HomeworkRoute } from '@/routes/HomeworkRoute';
 import { SettingsRoute } from '@/routes/SettingsRoute';
 import { DevGeneratorsRoute } from '@/routes/DevGeneratorsRoute';
@@ -22,6 +23,7 @@ export function App() {
           <Route path="/learn/:topicId" element={<TopicRoute />} />
           <Route path="/homework" element={<HomeworkRoute />} />
           <Route path="/settings" element={<SettingsRoute />} />
+          <Route path="/practice/:topicId" element={<PracticeRoute />} />
           <Route path="/dev/generators" element={<DevGeneratorsRoute />} />
           <Route path="*" element={<NotFoundRoute />} />
         </Routes>

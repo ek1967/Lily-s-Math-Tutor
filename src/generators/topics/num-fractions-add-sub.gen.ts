@@ -28,7 +28,7 @@ const sameDenominator: ExerciseGenerator = {
     const rawNumerator = adding ? n1 + n2 : n1 - n2;
 
     return {
-      promptHe: 'כמה יוצא? אם אפשר לצמצם — לצמצם.',
+      promptHe: 'כמה יוצא?',
       promptTex: `${fracTex(n1, d)} ${op} ${fracTex(n2, d)}`,
       input: { kind: 'fraction', keypad: 'fraction', allowNegative: false },
       answer: { kind: 'fraction', num: result.n, den: result.d, requireReduced: true },
@@ -83,7 +83,7 @@ const oneMultipleOfOther: ExerciseGenerator = {
       : leftExpanded.n - rightExpanded.n;
 
     return {
-      promptHe: 'כמה יוצא? אם אפשר לצמצם — לצמצם.',
+      promptHe: 'כמה יוצא?',
       promptTex: `${fracTex(left.n, left.d)} ${op} ${fracTex(right.n, right.d)}`,
       input: { kind: 'fraction', keypad: 'fraction', allowNegative: false },
       answer: { kind: 'fraction', num: result.n, den: result.d, requireReduced: true },
@@ -153,7 +153,7 @@ const coprimeDenominators: ExerciseGenerator = {
     const op = adding ? '+' : '-';
 
     return {
-      promptHe: 'כמה יוצא? אם אפשר לצמצם — לצמצם.',
+      promptHe: 'כמה יוצא?',
       promptTex: `${fracTex(left.n, left.d)} ${op} ${fracTex(right.n, right.d)}`,
       input: { kind: 'fraction', keypad: 'fraction', allowNegative: false },
       answer: { kind: 'fraction', num: result.n, den: result.d, requireReduced: true },

@@ -1,18 +1,23 @@
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button, Card, Icon } from '@/components/ui';
 import { STRAND_BY_ID, getTopic } from '@/data/curriculum';
 import { allPrerequisitesOf } from '@/data/curriculum/graph';
 import { asTopicId } from '@/types/curriculum';
+import { generatorsForTopic, registerAllGenerators } from '@/generators';
 import { paths } from '@/router';
 import { NotFoundRoute } from './NotFoundRoute';
 
+registerAllGenerators();
+
 export function TopicRoute() {
   const { topicId = '' } = useParams();
+  const navigate = useNavigate();
   const topic = getTopic(asTopicId(topicId));
   if (!topic) return <NotFoundRoute />;
 
   const strand = STRAND_BY_ID.get(topic.strand);
   const direct = topic.prerequisites.map(getTopic).filter((t) => t !== undefined);
+  const hasExercises = generatorsForTopic(topic.id).length > 0;
 
   return (
     <div className="space-y-5">
@@ -73,10 +78,17 @@ export function TopicRoute() {
         </Card>
       )}
 
-      <Button size="hero" block disabled>
+      <Button
+        size="hero"
+        block
+        disabled={!hasExercises}
+        onClick={() => navigate(paths.practice(topic.id))}
+      >
         לתרגל את הנושא
       </Button>
-      <p className="text-center text-sm text-ink-soft">התרגילים לנושא הזה בדרך.</p>
+      {!hasExercises && (
+        <p className="text-center text-sm text-ink-soft">התרגילים לנושא הזה בדרך.</p>
+      )}
     </div>
   );
 }

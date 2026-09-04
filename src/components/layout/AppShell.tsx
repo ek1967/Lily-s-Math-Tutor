@@ -8,7 +8,9 @@ import { BottomNav } from './BottomNav';
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const { pathname } = useLocation();
-  const inSession = pathname.startsWith('/study/');
+  // While she is working on a question, nothing else may compete for attention
+  // — and the nav bar would otherwise sit on top of the submit button.
+  const inSession = pathname.startsWith('/study/') || pathname.startsWith('/practice/');
 
   return (
     <div className="flex min-h-dvh flex-col bg-bg">
