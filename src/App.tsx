@@ -5,6 +5,7 @@ import { LearnRoute } from '@/routes/LearnRoute';
 import { TopicRoute } from '@/routes/TopicRoute';
 import { HomeworkRoute } from '@/routes/HomeworkRoute';
 import { SettingsRoute } from '@/routes/SettingsRoute';
+import { DevGeneratorsRoute } from '@/routes/DevGeneratorsRoute';
 import { NotFoundRoute } from '@/routes/NotFoundRoute';
 
 /**
@@ -21,6 +22,7 @@ export function App() {
           <Route path="/learn/:topicId" element={<TopicRoute />} />
           <Route path="/homework" element={<HomeworkRoute />} />
           <Route path="/settings" element={<SettingsRoute />} />
+          <Route path="/dev/generators" element={<DevGeneratorsRoute />} />
           <Route path="*" element={<NotFoundRoute />} />
         </Routes>
       </AppShell>

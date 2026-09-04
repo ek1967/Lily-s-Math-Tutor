@@ -32,7 +32,12 @@ export function BottomNav() {
             >
               {({ isActive }) => (
                 <>
-                  <Icon name={item.icon} className="h-6 w-6" filled={isActive} />
+                  {/* Colour and weight carry the active state; filling an open
+                      outline path turns these glyphs into solid blobs. */}
+                  <Icon
+                    name={item.icon}
+                    className={isActive ? 'h-6 w-6 [stroke-width:2.1]' : 'h-6 w-6'}
+                  />
                   <span>{item.label}</span>
                 </>
               )}
