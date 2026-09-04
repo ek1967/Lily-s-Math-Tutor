@@ -26,6 +26,11 @@ export default defineConfig(({ command }) => ({
   resolve: { alias: { '@': path.resolve(__dirname, 'src') } },
   build: {
     target: 'es2022',
+    // The main chunk carries the whole curriculum, every generator and every
+    // lesson — the content that makes the app work offline. KaTeX, the
+    // Anthropic SDK and pdf.js are all split out and load on demand, which is
+    // the split that actually matters for the daily path.
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
         manualChunks: {

@@ -1,4 +1,5 @@
 import type { TopicId } from './curriculum';
+import type { DetectedExercise } from '@/lib/ai/homework';
 
 /** An uploaded worksheet. Pixels live in MaterialPage; this is the index entry. */
 export interface UploadedMaterial {
@@ -11,6 +12,8 @@ export interface UploadedMaterial {
   bytes: number;
   status: 'new' | 'working' | 'done';
   detectedTopicIds: TopicId[];
+  /** The checklist read off the sheet. Not indexed, so it can grow freely. */
+  exercises: DetectedExercise[];
   threadId?: string;
   /** Small enough to inline, so the list renders without touching blobs. */
   thumbDataUrl: string;

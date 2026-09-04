@@ -14,10 +14,11 @@
       content="default-src 'self';
                script-src 'self';
                style-src 'self' 'unsafe-inline';
-               font-src 'self';
+               font-src 'self' data:;
                img-src 'self' data: blob:;
                media-src 'self' blob:;
                worker-src 'self' blob:;
+               manifest-src 'self';
                connect-src 'self' https://api.anthropic.com;
                object-src 'none';
                base-uri 'self';
@@ -25,6 +26,9 @@
     />
     <meta name="theme-color" content="#FBF7F2" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#1C1917" media="(prefers-color-scheme: dark)" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="icons/icon-180.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="מתמטיקה" />
     <meta name="description" content="לומדת מתמטיקה אישית — הסברים, תרגול ועזרה בשיעורי בית" />
