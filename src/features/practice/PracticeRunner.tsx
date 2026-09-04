@@ -4,6 +4,7 @@ import { AnswerInput } from '@/components/math/AnswerInput';
 import { NumberKeypad } from '@/components/math/NumberKeypad';
 import { HintLadder } from '@/components/feedback/HintLadder';
 import { StepReveal } from '@/components/feedback/StepReveal';
+import { BreatherCard } from '@/components/feedback/BreatherCard';
 import { MathBlock } from '@/lib/math/Katex';
 import { ALMOST, PRAISE, RECOVERED, STUCK, pickPhrase } from '@/data/encouragement';
 import {
@@ -17,17 +18,34 @@ interface Props {
   title: string;
   onExit: () => void;
   onFinish?: (records: AttemptRecord[]) => void;
+  /** Exercise indices after which to offer a short break. */
+  breatherAt?: readonly number[];
+  /** Rendered on the summary screen — what today was about. */
+  summaryNote?: string;
+  /** Resume point for a session she walked away from. */
+  startIndex?: number;
+  /** Called whenever she moves on, so progress can be written to storage. */
+  onProgress?: (index: number) => void;
 }
 
 /** How long a correct answer stays on screen before moving on. Long enough to
  *  register, short enough not to break the rhythm. */
 const AUTO_ADVANCE_MS = 950;
 
-export function PracticeRunner({ exercises, title, onExit, onFinish }: Props) {
+export function PracticeRunner({
+  exercises,
+  title,
+  onExit,
+  onFinish,
+  breatherAt = [],
+  summaryNote,
+  startIndex = 0,
+  onProgress,
+}: Props) {
   const [state, dispatch] = useReducer(
     practiceReducer,
     undefined,
-    () => initPractice(exercises, Date.now()),
+    () => initPractice(exercises, Date.now(), breatherAt, startIndex),
   );
   const finished = useRef(false);
 
@@ -41,6 +59,11 @@ export function PracticeRunner({ exercises, title, onExit, onFinish }: Props) {
     return () => clearTimeout(t);
   }, [state.phase, state.index]);
 
+  // Written after every step, so closing the tab mid-question costs nothing.
+  useEffect(() => {
+    onProgress?.(state.index);
+  }, [state.index, onProgress]);
+
   useEffect(() => {
     if (state.phase === 'done' && !finished.current) {
       finished.current = true;
@@ -49,7 +72,10 @@ export function PracticeRunner({ exercises, title, onExit, onFinish }: Props) {
   }, [state.phase, state.records, onFinish]);
 
   if (state.phase === 'done') {
-    return <Summary state={state} onExit={onExit} />;
+    return <Summary state={state} onExit={onExit} note={summaryNote} />;
+  }
+  if (state.phase === 'breather') {
+    return <BreatherCard onContinue={() => dispatch({ type: 'next', now: Date.now() })} />;
   }
   if (!ex) return null;
 
@@ -199,7 +225,15 @@ function FeedbackBar({ state }: { state: PracticeState }) {
   return null;
 }
 
-function Summary({ state, onExit }: { state: PracticeState; onExit: () => void }) {
+function Summary({
+  state,
+  onExit,
+  note,
+}: {
+  state: PracticeState;
+  onExit: () => void;
+  note?: string;
+}) {
   const stats = useMemo(() => practiceStats(state), [state]);
   const perfect = stats.correct === stats.attempted && stats.attempted > 0;
 
@@ -211,6 +245,7 @@ function Summary({ state, onExit }: { state: PracticeState; onExit: () => void }
       <p className="text-lg">
         פתרת נכון {stats.correct} מתוך {stats.attempted}
       </p>
+      {note && <p className="text-ink-soft">{note}</p>}
       {stats.hintsUsed > 0 && (
         <p className="text-ink-soft">
           ולקחת {stats.hintsUsed} רמזים — זה בדיוק מה שהם שם בשבילו

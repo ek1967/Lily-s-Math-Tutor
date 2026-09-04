@@ -202,6 +202,40 @@ describe('practice engine', () => {
     expect(s.needsReducing).toBe(true);
   });
 
+  it('pauses for a breath where the plan asks for one', () => {
+    let s = initPractice(twoStepExercises(4), 0, [1]);
+    // First question: straight on to the second.
+    s = typeCorrectAnswer(s);
+    s = run(s, { type: 'submit', now: 1 }, { type: 'next', now: 2 });
+    expect(s.phase).toBe('answering');
+    expect(s.index).toBe(1);
+
+    // Second question is followed by a breather, and the attempt is recorded
+    // on the way in rather than twice.
+    s = typeCorrectAnswer(s);
+    s = run(s, { type: 'submit', now: 3 }, { type: 'next', now: 4 });
+    expect(s.phase).toBe('breather');
+    expect(s.index).toBe(1);
+    expect(s.records).toHaveLength(2);
+
+    s = practiceReducer(s, { type: 'next', now: 5 });
+    expect(s.phase).toBe('answering');
+    expect(s.index).toBe(2);
+    expect(s.records).toHaveLength(2);
+  });
+
+  it('never ends a set on a breather', () => {
+    // A pause after the last question would just be an extra tap.
+    let s = initPractice(twoStepExercises(2), 0, [0, 1]);
+    s = typeCorrectAnswer(s);
+    s = run(s, { type: 'submit', now: 1 }, { type: 'next', now: 2 });
+    expect(s.phase).toBe('breather');
+    s = run(s, { type: 'next', now: 3 });
+    s = typeCorrectAnswer(s);
+    s = run(s, { type: 'submit', now: 4 }, { type: 'next', now: 5 });
+    expect(s.phase).toBe('done');
+  });
+
   it('ignores input once the exercise is resolved', () => {
     let s = initPractice(twoStepExercises(1), 0);
     s = typeCorrectAnswer(s);

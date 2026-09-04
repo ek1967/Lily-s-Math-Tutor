@@ -24,7 +24,7 @@ export interface AttemptRecord {
   at: number;
 }
 
-export type Phase = 'answering' | 'almost' | 'correct' | 'revealed' | 'done';
+export type Phase = 'answering' | 'almost' | 'correct' | 'revealed' | 'breather' | 'done';
 
 export interface PracticeState {
   exercises: Exercise[];
@@ -40,6 +40,10 @@ export interface PracticeState {
   needsReducing: boolean;
   startedAt: number;
   records: AttemptRecord[];
+  /** Exercise indices after which to pause for a breath. A distractible
+   *  student who works straight through fifteen items finishes the last five
+   *  badly; a fifteen-second break costs nothing and buys the rest. */
+  breatherAt: readonly number[];
 }
 
 export type PracticeAction =
@@ -60,12 +64,20 @@ function partsFor(ex: Exercise | undefined): number {
   return PART_COUNT[ex.input.kind] ?? 1;
 }
 
-export function initPractice(exercises: Exercise[], now: number): PracticeState {
+export function initPractice(
+  exercises: Exercise[],
+  now: number,
+  breatherAt: readonly number[] = [],
+  /** Where to pick up — a session abandoned mid-set resumes on the same
+   *  question, which is the difference between "carry on" and "start again". */
+  startIndex = 0,
+): PracticeState {
+  const index = Math.max(0, Math.min(startIndex, exercises.length));
   return {
     exercises,
-    index: 0,
-    phase: exercises.length === 0 ? 'done' : 'answering',
-    value: Array(partsFor(exercises[0])).fill(''),
+    index,
+    phase: exercises.length === 0 || index >= exercises.length ? 'done' : 'answering',
+    value: Array(partsFor(exercises[index])).fill(''),
     activePart: 0,
     hintsShown: 0,
     wrongTries: 0,
@@ -73,6 +85,7 @@ export function initPractice(exercises: Exercise[], now: number): PracticeState 
     needsReducing: false,
     startedAt: now,
     records: [],
+    breatherAt,
   };
 }
 
@@ -188,6 +201,29 @@ export function practiceReducer(s: PracticeState, action: PracticeAction): Pract
       return { ...s, phase: 'revealed', hintsShown: 3 };
 
     case 'next': {
+      const advance = (records: AttemptRecord[]): PracticeState => {
+        const index = s.index + 1;
+        if (index >= s.exercises.length) {
+          return { ...s, phase: 'done', records, index: s.exercises.length };
+        }
+        return {
+          ...s,
+          index,
+          phase: 'answering',
+          value: Array(partsFor(s.exercises[index])).fill(''),
+          activePart: 0,
+          hintsShown: 0,
+          wrongTries: 0,
+          unreadable: false,
+          needsReducing: false,
+          startedAt: action.now,
+          records,
+        };
+      };
+
+      // Leaving the breather: the exercise was already recorded on the way in.
+      if (s.phase === 'breather') return advance(s.records);
+
       // A revealed or abandoned exercise is still recorded — the parent screen
       // and the scheduler both need to know it did not go well.
       const records =
@@ -195,23 +231,11 @@ export function practiceReducer(s: PracticeState, action: PracticeAction): Pract
           ? [...s.records, record(s, ex, false, action.now)]
           : s.records;
 
-      const index = s.index + 1;
-      if (index >= s.exercises.length) {
-        return { ...s, phase: 'done', records, index: s.exercises.length };
+      const moreToCome = s.index + 1 < s.exercises.length;
+      if (moreToCome && s.breatherAt.includes(s.index)) {
+        return { ...s, phase: 'breather', records };
       }
-      return {
-        ...s,
-        index,
-        phase: 'answering',
-        value: Array(partsFor(s.exercises[index])).fill(''),
-        activePart: 0,
-        hintsShown: 0,
-        wrongTries: 0,
-        unreadable: false,
-        needsReducing: false,
-        startedAt: action.now,
-        records,
-      };
+      return advance(records);
     }
   }
 }
