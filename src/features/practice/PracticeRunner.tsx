@@ -34,7 +34,21 @@ interface Props {
  *  register, short enough not to break the rhythm. */
 const AUTO_ADVANCE_MS = 950;
 
-export function PracticeRunner({
+/**
+ * The practice loop.
+ *
+ * The state lives in a reducer whose initial value is computed once per mount,
+ * so a different set of exercises arriving into an already-mounted runner was
+ * silently ignored: walking from one topic's practice screen to another's kept
+ * the first topic's questions on screen under the second topic's title, and
+ * filed the attempts against the wrong topic. Keying on the set itself remounts
+ * instead — one fix here, rather than a rule every caller has to remember.
+ */
+export function PracticeRunner(props: Props) {
+  return <Runner {...props} key={props.exercises.map((e) => e.id).join('|')} />;
+}
+
+function Runner({
   exercises,
   title,
   onExit,

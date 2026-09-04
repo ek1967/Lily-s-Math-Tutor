@@ -14,6 +14,12 @@ import { squareRootsGenerators } from './topics/num-square-roots.gen';
 import { pythagorasGenerators } from './topics/geo-pythagoras.gen';
 import { areaPerimeterGenerators } from './topics/geo-area-perimeter.gen';
 import { meanMedianModeGenerators } from './topics/sta-mean-median-mode.gen';
+import { decimalsOpsGenerators } from './topics/num-decimals-ops.gen';
+import { fractionDecimalPercentGenerators } from './topics/num-fraction-decimal-percent.gen';
+import { wordProblemsIntroGenerators } from './topics/alg-word-problems-intro.gen';
+import { powersLawsGenerators } from './topics/num-powers-laws.gen';
+import { multiplyBracketsGenerators } from './topics/alg-multiply-brackets.gen';
+import { linearFunctionGenerators } from './topics/fun-linear-function.gen';
 
 /**
  * Every generator file is imported and registered here by hand. Explicit beats
@@ -42,6 +48,12 @@ export function registerAllGenerators(): void {
     ...areaPerimeterGenerators,
     ...pythagorasGenerators,
     ...meanMedianModeGenerators,
+    ...decimalsOpsGenerators,
+    ...fractionDecimalPercentGenerators,
+    ...wordProblemsIntroGenerators,
+    ...powersLawsGenerators,
+    ...multiplyBracketsGenerators,
+    ...linearFunctionGenerators,
   ]) {
     registerGenerator(gen);
   }

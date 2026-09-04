@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PracticeRunner } from '@/features/practice/PracticeRunner';
 import { buildPracticeSet } from '@/lib/practice/selection';
@@ -19,14 +19,17 @@ export function PracticeRoute() {
   const navigate = useNavigate();
   const topic = getTopic(asTopicId(topicId));
 
-  const sessionId = useRef(`practice-${Date.now().toString(36)}`);
-
   // One seed per visit, so coming back gives her a fresh set rather than the
-  // same six questions she already answered.
-  const exercises = useMemo(
-    () => (topic ? buildPracticeSet(topic.id, Math.floor(Date.now() / 1000), SET_SIZE) : []),
-    [topic],
-  );
+  // same six questions she already answered. The session id is rebuilt with it:
+  // it used to be a ref minted once, so attempts on a second topic were filed
+  // under the first topic's session.
+  const { exercises, sessionId } = useMemo(() => {
+    const seed = Math.floor(Date.now() / 1000);
+    return {
+      exercises: topic ? buildPracticeSet(topic.id, seed, SET_SIZE) : [],
+      sessionId: `practice-${topicId}-${seed.toString(36)}`,
+    };
+  }, [topic, topicId]);
 
   if (!topic) return <NotFoundRoute />;
 
@@ -52,7 +55,7 @@ export function PracticeRoute() {
           `${paths.chat(`stuck-${Date.now().toString(36)}`)}?exercise=${encodeURIComponent(exercise.id)}`,
         )
       }
-      onFinish={(records) => void persistPractice(sessionId.current, records)}
+      onFinish={(records) => void persistPractice(sessionId, records)}
     />
   );
 }

@@ -16,6 +16,12 @@ import { lesson as linearEqBasic } from './algebra/alg-linear-eq-basic.lesson';
 import { lesson as areaPerimeter } from './geometry/geo-area-perimeter.lesson';
 import { lesson as pythagoras } from './geometry/geo-pythagoras.lesson';
 import { lesson as meanMedianMode } from './stats/sta-mean-median-mode.lesson';
+import { lesson as decimalsOps } from './numbers/num-decimals-ops.lesson';
+import { lesson as fractionDecimalPercent } from './numbers/num-fraction-decimal-percent.lesson';
+import { lesson as powersLaws } from './numbers/num-powers-laws.lesson';
+import { lesson as wordProblemsIntro } from './algebra/alg-word-problems-intro.lesson';
+import { lesson as multiplyBrackets } from './algebra/alg-multiply-brackets.lesson';
+import { lesson as linearFunction } from './functions/fun-linear-function.lesson';
 
 /**
  * Hand-written teaching content. Imported explicitly rather than globbed, so a
@@ -39,6 +45,12 @@ const AUTHORED: readonly LessonContent[] = [
   areaPerimeter,
   pythagoras,
   meanMedianMode,
+  decimalsOps,
+  fractionDecimalPercent,
+  powersLaws,
+  wordProblemsIntro,
+  multiplyBrackets,
+  linearFunction,
 ];
 
 export const LESSONS: ReadonlyMap<TopicId, LessonContent> = new Map(
