@@ -4,6 +4,8 @@ import { STRAND_BY_ID, getTopic } from '@/data/curriculum';
 import { allPrerequisitesOf } from '@/data/curriculum/graph';
 import { asTopicId } from '@/types/curriculum';
 import { generatorsForTopic, registerAllGenerators } from '@/generators';
+import { getAuthoredLesson } from '@/data/lessons';
+import { LessonView } from '@/features/learn/LessonView';
 import { paths } from '@/router';
 import { NotFoundRoute } from './NotFoundRoute';
 
@@ -18,6 +20,7 @@ export function TopicRoute() {
   const strand = STRAND_BY_ID.get(topic.strand);
   const direct = topic.prerequisites.map(getTopic).filter((t) => t !== undefined);
   const hasExercises = generatorsForTopic(topic.id).length > 0;
+  const lesson = getAuthoredLesson(topic.id);
 
   return (
     <div className="space-y-5">
@@ -77,6 +80,8 @@ export function TopicRoute() {
           </p>
         </Card>
       )}
+
+      {lesson && <LessonView lesson={lesson} />}
 
       <Button
         size="hero"

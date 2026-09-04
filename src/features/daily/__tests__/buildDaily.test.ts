@@ -31,11 +31,40 @@ describe('building the day', () => {
   });
 
   it('opens with the topics that are due', () => {
-    const bp = buildDailyBlueprint(plan({ review: [REVIEW, REVIEW2] }), mastery(), 1, 12);
+    // The focus topic is already introduced, so there is no lesson to sit first.
+    const m = mastery([[FOCUS, { introduced: true, level: 2 }]]);
+    const bp = buildDailyBlueprint(plan({ review: [REVIEW, REVIEW2] }), m, 1, 12);
     const first = bp.steps[0];
     expect(first?.kind).toBe('exercise');
     // Confidence first: the session starts with something she can already do.
     expect(first && 'topicId' in first ? first.topicId : null).toBe(REVIEW);
+  });
+
+  it('teaches a brand-new topic before asking anything about it', () => {
+    // Being asked to solve first is how a student learns that maths is a thing
+    // that happens to her rather than something she is being shown.
+    const bp = buildDailyBlueprint(plan({ review: [] }), mastery(), 1, 12);
+    expect(bp.steps[0]).toEqual({ kind: 'lesson', topicId: FOCUS });
+  });
+
+  it('does not re-teach a topic she has already been introduced to', () => {
+    const m = mastery([[FOCUS, { introduced: true, level: 2 }]]);
+    const bp = buildDailyBlueprint(plan({ review: [] }), m, 1, 12);
+    expect(bp.steps.some((s) => s.kind === 'lesson')).toBe(false);
+  });
+
+  it('still fills the session with the full number of questions', () => {
+    // The lesson is not one of the items — it must not eat a question.
+    const withLesson = buildDailyBlueprint(plan({ review: [] }), mastery(), 1, 12);
+    const withoutLesson = buildDailyBlueprint(
+      plan({ review: [] }),
+      mastery([[FOCUS, { introduced: true }]]),
+      1,
+      12,
+    );
+    const count = (bp: { steps: { kind: string }[] }) =>
+      bp.steps.filter((s) => s.kind === 'exercise').length;
+    expect(count(withLesson)).toBe(count(withoutLesson));
   });
 
   it('caps the warm-up at three topics', () => {
@@ -111,7 +140,7 @@ describe('rebuilding a stored session', () => {
     const first = exercisesFromSteps(bp.steps);
     const again = exercisesFromSteps(bp.steps);
     expect(first.map((e) => e.id)).toEqual(again.map((e) => e.id));
-    expect(first).toHaveLength(bp.steps.length);
+    expect(first).toHaveLength(bp.steps.filter((s) => s.kind === 'exercise').length);
   });
 
   it('ignores non-exercise steps', () => {

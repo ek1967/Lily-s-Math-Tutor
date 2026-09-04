@@ -7,6 +7,7 @@ import type { MasteryRecord } from '@/types/mastery';
 import type { TopicId } from '@/types/curriculum';
 import type { Exercise, GeneratorId } from '@/types/exercise';
 import type { SessionStep, StudySession } from '@/types/session';
+import { hasAuthoredLesson } from '@/data/lessons';
 
 /**
  * Turns a day plan into an ordered set of steps.
@@ -26,6 +27,18 @@ export interface DailyBlueprint {
   breatherAt: number[];
 }
 
+/** A topic she has never been taught opens with the lesson, not with questions.
+ *  Being asked to solve something first is how a student learns that maths is
+ *  a thing that happens to her. */
+function shouldTeachFirst(
+  focus: TopicId | null,
+  mastery: ReadonlyMap<TopicId, MasteryRecord>,
+): boolean {
+  if (!focus) return false;
+  if (!hasAuthoredLesson(focus)) return false;
+  return mastery.get(focus)?.introduced !== true;
+}
+
 export function buildDailyBlueprint(
   plan: TodayPlan,
   mastery: ReadonlyMap<TopicId, MasteryRecord>,
@@ -37,6 +50,8 @@ export function buildDailyBlueprint(
   const steps: SessionStep[] = [];
   const touched = new Set<TopicId>();
   const recent: GeneratorId[] = [];
+
+  const exerciseCount = (): number => steps.filter((s) => s.kind === 'exercise').length;
 
   const addExercise = (topicId: TopicId, easier: boolean): boolean => {
     const candidates = generatorsForTopic(topicId);
@@ -64,13 +79,18 @@ export function buildDailyBlueprint(
     return true;
   };
 
+  if (shouldTeachFirst(plan.focus, mastery) && plan.focus) {
+    steps.push({ kind: 'lesson', topicId: plan.focus });
+    touched.add(plan.focus);
+  }
+
   // Warm-up: one item from each due topic, up to three.
   const warmUp = plan.review.slice(0, 3);
   for (const topicId of warmUp) addExercise(topicId, true);
 
   // Core: the day's focus.
   const coolDownCount = warmUp.length > 0 ? 1 : 0;
-  const coreCount = Math.max(3, total - steps.length - coolDownCount);
+  const coreCount = Math.max(3, total - exerciseCount() - coolDownCount);
   if (plan.focus) {
     for (let i = 0; i < coreCount; i += 1) addExercise(plan.focus, false);
   }
@@ -78,8 +98,10 @@ export function buildDailyBlueprint(
   // Cool-down: end on something she can do.
   if (coolDownCount > 0 && warmUp[0]) addExercise(warmUp[0], true);
 
-  // One breath, halfway through, and never on the final item.
-  const breatherAt = steps.length >= 6 ? [Math.floor(steps.length / 2) - 1] : [];
+  // One breath, halfway through, and never on the final item. Indices count
+  // exercises only, since that is what the runner walks.
+  const exercises = exerciseCount();
+  const breatherAt = exercises >= 6 ? [Math.floor(exercises / 2) - 1] : [];
 
   return { steps, topicIds: [...touched], breatherAt };
 }

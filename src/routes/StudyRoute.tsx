@@ -5,6 +5,9 @@ import { persistPractice } from '@/features/practice/persist';
 import { exercisesFromSteps } from '@/features/daily/buildDaily';
 import { getSession, saveSession } from '@/lib/db/repos/sessionRepo';
 import { getTopic } from '@/data/curriculum';
+import { getAuthoredLesson } from '@/data/lessons';
+import { LessonView } from '@/features/learn/LessonView';
+import { markIntroduced } from '@/lib/db/repos/masteryRepo';
 import { registerAllGenerators } from '@/generators';
 import { Button, Card } from '@/components/ui';
 import type { StudySession } from '@/types/session';
@@ -22,6 +25,7 @@ export function StudyRoute() {
   const { sessionId = '' } = useParams();
   const navigate = useNavigate();
   const [session, setSession] = useState<StudySession | null | 'missing'>(null);
+  const [lessonRead, setLessonRead] = useState(false);
 
   useEffect(() => {
     void getSession(sessionId)
@@ -74,6 +78,37 @@ export function StudyRoute() {
         </Button>
       </Card>
     );
+  }
+
+  // A brand-new topic opens with its lesson, before any question is asked.
+  const lessonStep = session.plan.find((step) => step.kind === 'lesson');
+  if (lessonStep && !lessonRead && session.currentStep === 0) {
+    const lesson = getAuthoredLesson(lessonStep.topicId);
+    const topic = getTopic(lessonStep.topicId);
+    if (lesson && topic) {
+      return (
+        <div className="space-y-5">
+          <header>
+            <p className="text-sm text-ink-soft">נושא חדש</p>
+            <h1 className="text-2xl">{topic.titleHe}</h1>
+          </header>
+          <LessonView lesson={lesson} />
+          <Button
+            size="hero"
+            block
+            onClick={() => {
+              setLessonRead(true);
+              void markIntroduced(lessonStep.topicId).catch(() => {});
+            }}
+          >
+            הבנתי — בואי נתרגל
+          </Button>
+          <Button variant="quiet" block onClick={() => navigate(paths.home())}>
+            אחר כך
+          </Button>
+        </div>
+      );
+    }
   }
 
   const titles = session.topicIds
