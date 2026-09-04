@@ -7,6 +7,7 @@ import { Button, Card } from '@/components/ui';
 import { createThread, getThread } from '@/lib/db/repos/chatRepo';
 import { getMasteryMap } from '@/lib/db/repos/masteryRepo';
 import { hasApiKey } from '@/lib/security/apiKey';
+import { ConsentGate } from '@/features/consent/ConsentGate';
 import { useSettings } from '@/stores/settingsStore';
 import { getTopic } from '@/data/curriculum';
 import { exerciseFromId } from '@/generators/make';
@@ -94,6 +95,7 @@ export function ChatRoute() {
         </Card>
       )}
 
+      <ConsentGate>
       <ChatView
         threadId={threadId}
         ctx={ctx}
@@ -115,6 +117,7 @@ export function ChatRoute() {
             }
           : {})}
       />
+      </ConsentGate>
     </div>
   );
 }

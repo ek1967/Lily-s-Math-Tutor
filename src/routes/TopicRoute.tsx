@@ -124,6 +124,8 @@ function TopicLesson({ topicId }: { topicId: import('@/types/curriculum').TopicI
   const topic = getTopic(topicId);
   if (!topic) return null;
 
+  const consented = settings.aiConsentAt !== null;
+
   const write = async () => {
     setState('loading');
     const result = await resolveLesson(topic, settings.studentName, settings.model);
@@ -144,10 +146,15 @@ function TopicLesson({ topicId }: { topicId: import('@/types/curriculum').TopicI
         <>
           <p>לנושא הזה עוד אין הסבר כתוב.</p>
           {state === 'failed' && <p className="mt-2 text-almost">{message}</p>}
-          {hasApiKey() ? (
+          {hasApiKey() && consented ? (
             <Button className="mt-3" onClick={() => void write()}>
               {state === 'failed' ? 'לנסות שוב' : 'שהמורה תכתוב לי הסבר'}
             </Button>
+          ) : hasApiKey() && !consented ? (
+            <p className="mt-2 text-sm text-ink-soft">
+              כדי שהמורה תכתוב הסבר צריך אישור הורים פעם אחת — אפשר לתת אותו במסך
+              שיעורי הבית.
+            </p>
           ) : (
             <p className="mt-2 text-sm text-ink-soft">
               אפשר לתרגל אותו גם ככה, או להוסיף מפתח בהגדרות כדי שהמורה תכתוב הסבר.

@@ -10,6 +10,7 @@ import { useSettings } from '@/stores/settingsStore';
 import { getTopic } from '@/data/curriculum';
 import type { UploadedMaterial } from '@/types/material';
 import type { DetectedExercise } from '@/lib/ai/homework';
+import { ConsentGate } from '@/features/consent/ConsentGate';
 import { paths } from '@/router';
 import { NotFoundRoute } from './NotFoundRoute';
 
@@ -111,6 +112,7 @@ export function MaterialRoute() {
           )}
         </Card>
 
+        <ConsentGate>
         <ChatView
           threadId={`${material.id}:${openIndex}`}
           ctx={ctx}
@@ -126,6 +128,7 @@ export function MaterialRoute() {
             'אני חושבת שהתשובה היא… אפשר לבדוק?',
           ]}
         />
+        </ConsentGate>
 
         <Button
           variant={openExercise.done ? 'ghost' : 'primary'}

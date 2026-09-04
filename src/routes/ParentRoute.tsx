@@ -13,6 +13,7 @@ import {
 } from '@/features/parent/useParentData';
 import { getTopic } from '@/data/curriculum';
 import { formatAgorot } from '@/lib/ai/budget';
+import { getParentSettings, saveParentSettings } from '@/lib/security/pin';
 import { dayKey, relativeDayHe, streakLength } from '@/lib/time';
 import { useSettings } from '@/stores/settingsStore';
 import { modelById } from '@/lib/ai/models';
@@ -155,16 +156,11 @@ export function ParentRoute() {
             </div>
           </Card>
 
-          <Card>
-            <h2 className="mb-2 text-lg">עלות</h2>
-            <p className="text-2xl">{formatAgorot(data.spend.agorot)}</p>
-            <p className="mt-1 text-sm text-ink-soft">
-              החודש, ב-{data.spend.requests} פניות למורה. מודל: {modelById(settings.model).labelHe}.
-            </p>
-            <p className="mt-2 text-sm text-ink-soft">
-              תרגול, שיעורים וחזרות לא עולים דבר — רק הצ׳אט ושיעורי הבית.
-            </p>
-          </Card>
+          <SpendCard
+            agorot={data.spend.agorot}
+            requests={data.spend.requests}
+            modelLabel={modelById(settings.model).labelHe}
+          />
         </>
       )}
 
@@ -276,5 +272,76 @@ function Stat({ value, label }: { value: string; label: string }) {
       <div className="text-2xl font-semibold">{value}</div>
       <div className="text-sm text-ink-soft">{label}</div>
     </div>
+  );
+}
+
+/**
+ * Cost against the monthly ceiling. The ceiling was declared with a comment
+ * saying it is "shown as a warning" and nothing ever compared against it, so
+ * the warning did not exist. It does now, at 80% — early enough to change the
+ * model or the habit before the key stops working mid-homework.
+ */
+function SpendCard({
+  agorot,
+  requests,
+  modelLabel,
+}: {
+  agorot: number;
+  requests: number;
+  modelLabel: string;
+}) {
+  const [budget, setBudget] = useState(() => getParentSettings().monthlyBudgetAgorot);
+  const share = budget > 0 ? agorot / budget : 0;
+
+  return (
+    <Card>
+      <h2 className="mb-2 text-lg">עלות</h2>
+      <p className="text-2xl">{formatAgorot(agorot)}</p>
+      <p className="mt-1 text-sm text-ink-soft">
+        החודש, ב-{requests} פניות למורה. מודל: {modelLabel}.
+      </p>
+
+      {share >= 0.8 && (
+        <div className="mt-3 rounded-lg bg-almost-tint px-4 py-3 text-almost">
+          {share >= 1
+            ? `עברתם את התקציב החודשי (${formatAgorot(budget)}).`
+            : `הגעתם ל-${Math.round(share * 100)}% מהתקציב החודשי.`}
+          <p className="mt-1 text-sm text-ink-soft">
+            אפשר לעבור למודל חסכוני יותר בהגדרות, או להעלות את התקציב כאן.
+          </p>
+        </div>
+      )}
+
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-2">
+        <div
+          className="h-full rounded-full transition-[width] duration-500"
+          style={{
+            width: `${Math.min(100, share * 100)}%`,
+            backgroundColor: share >= 0.8 ? 'rgb(var(--c-almost))' : 'rgb(var(--c-primary))',
+          }}
+        />
+      </div>
+
+      <label className="mt-3 block">
+        <span className="mb-1 block text-sm text-ink-soft">תקציב חודשי, בשקלים</span>
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          value={Math.round(budget / 100)}
+          onChange={(e) => {
+            const next = Math.max(0, Number(e.target.value) || 0) * 100;
+            setBudget(next);
+            saveParentSettings({ ...getParentSettings(), monthlyBudgetAgorot: next });
+          }}
+          className="tap w-full rounded-md border border-line bg-surface px-3 py-2"
+        />
+      </label>
+
+      <p className="mt-2 text-sm text-ink-soft">
+        זו תזכורת בלבד — התקרה האמיתית נקבעת בקונסולה של Anthropic. תרגול, שיעורים
+        וחזרות לא עולים דבר.
+      </p>
+    </Card>
   );
 }

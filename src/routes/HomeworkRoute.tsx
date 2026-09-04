@@ -9,6 +9,7 @@ import { listMaterials, saveMaterial } from '@/lib/db/repos/materialRepo';
 import { readWorksheet } from '@/lib/ai/homework';
 import { makeThumbnail } from '@/lib/files/imagePipeline';
 import { hasApiKey } from '@/lib/security/apiKey';
+import { ConsentGate } from '@/features/consent/ConsentGate';
 import { storageUnderPressure } from '@/lib/db/prune';
 import { useSettings } from '@/stores/settingsStore';
 import { relativeDayHe, dayKey } from '@/lib/time';
@@ -109,7 +110,13 @@ export function HomeworkRoute() {
       )}
 
       {hasApiKey() && (
-        <UploadPanel onReady={(pages) => void handle(pages)} working={working} initialFiles={shared} />
+        <ConsentGate>
+          <UploadPanel
+            onReady={(pages) => void handle(pages)}
+            working={working}
+            initialFiles={shared}
+          />
+        </ConsentGate>
       )}
 
       {errorHe && (
