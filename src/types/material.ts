@@ -17,6 +17,9 @@ export interface UploadedMaterial {
   threadId?: string;
   /** Small enough to inline, so the list renders without touching blobs. */
   thumbDataUrl: string;
+  /** Set once the full-resolution pages have been dropped to free space. The
+   *  checklist, the ticks, the chat and this thumbnail all still stand. */
+  pagesPruned?: boolean;
 }
 
 export interface MaterialPage {

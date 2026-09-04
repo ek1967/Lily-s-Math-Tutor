@@ -4,7 +4,7 @@ import { Button, Card, Icon } from '@/components/ui';
 import { MathInline } from '@/lib/math/Katex';
 import { ChatView } from '@/features/chat/ChatView';
 import { useTutorContext } from '@/features/chat/useTutorContext';
-import { getMaterial, getPages, updateMaterial } from '@/lib/db/repos/materialRepo';
+import { deleteMaterial, getMaterial, getPages, updateMaterial } from '@/lib/db/repos/materialRepo';
 import { buildGuidedOpening } from '@/lib/ai/prompts/homework';
 import { useSettings } from '@/stores/settingsStore';
 import { getTopic } from '@/data/curriculum';
@@ -30,6 +30,7 @@ export function MaterialRoute() {
   const [pageUrls, setPageUrls] = useState<string[]>([]);
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const [showPages, setShowPages] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     let urls: string[] = [];
@@ -193,21 +194,53 @@ export function MaterialRoute() {
         ))}
       </ul>
 
-      <Button variant="quiet" block onClick={() => setShowPages((v) => !v)}>
-        {showPages ? 'להסתיר את הדף' : 'להראות את הדף שצילמתי'}
-      </Button>
+      {material.pagesPruned ? (
+        <p className="text-center text-sm text-ink-soft">
+          הצילום נמחק כדי לפנות מקום במכשיר. הרשימה, הסימונים והשיחה נשמרו.
+        </p>
+      ) : (
+        <>
+          <Button variant="quiet" block onClick={() => setShowPages((v) => !v)}>
+            {showPages ? 'להסתיר את הדף' : 'להראות את הדף שצילמתי'}
+          </Button>
 
-      {showPages && (
-        <div className="space-y-2">
-          {pageUrls.map((url, i) => (
-            <img
-              key={url}
-              src={url}
-              alt={`עמוד ${i + 1}`}
-              className="w-full rounded-lg border border-line"
-            />
-          ))}
-        </div>
+          {showPages && (
+            <div className="space-y-2">
+              {pageUrls.map((url, i) => (
+                <img
+                  key={url}
+                  src={url}
+                  alt={`עמוד ${i + 1}`}
+                  className="w-full rounded-lg border border-line"
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {confirmDelete ? (
+        <Card className="border-almost/50">
+          <p>למחוק את הדף הזה לגמרי? הרשימה, הסימונים והשיחה יימחקו איתו.</p>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            <Button
+              onClick={() => {
+                void deleteMaterial(material.id)
+                  .catch(() => {})
+                  .then(() => navigate(paths.homework()));
+              }}
+            >
+              כן, למחוק
+            </Button>
+            <Button variant="ghost" onClick={() => setConfirmDelete(false)}>
+              ביטול
+            </Button>
+          </div>
+        </Card>
+      ) : (
+        <Button variant="quiet" block onClick={() => setConfirmDelete(true)}>
+          למחוק את הדף
+        </Button>
       )}
     </div>
   );

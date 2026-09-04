@@ -9,6 +9,7 @@ import { listMaterials, saveMaterial } from '@/lib/db/repos/materialRepo';
 import { readWorksheet } from '@/lib/ai/homework';
 import { makeThumbnail } from '@/lib/files/imagePipeline';
 import { hasApiKey } from '@/lib/security/apiKey';
+import { storageUnderPressure } from '@/lib/db/prune';
 import { useSettings } from '@/stores/settingsStore';
 import { relativeDayHe, dayKey } from '@/lib/time';
 import type { UploadedMaterial } from '@/types/material';
@@ -34,6 +35,17 @@ export function HomeworkRoute() {
       if (pages.length === 0) return;
       setWorking(true);
       setError('');
+
+      // Checked before spending a request on reading the sheet: a quota error
+      // used to be swallowed, leaving a worksheet in the list with no pages
+      // behind it and no explanation.
+      if (await storageUnderPressure()) {
+        setError(
+          'האחסון במכשיר כמעט מלא, אז לא אוכל לשמור את הדף. אפשר לפנות מקום במסך ההורים.',
+        );
+        setWorking(false);
+        return;
+      }
 
       const result = await readWorksheet(
         pages.map((p) => p.base64),
@@ -66,10 +78,16 @@ export function HomeworkRoute() {
         thumbDataUrl: thumb,
       };
 
-      await saveMaterial(
-        material,
-        pages.map((p) => ({ blob: p.blob, width: p.width, height: p.height, index: 0 })),
-      ).catch(() => {});
+      try {
+        await saveMaterial(
+          material,
+          pages.map((p) => ({ blob: p.blob, width: p.width, height: p.height, index: 0 })),
+        );
+      } catch {
+        setError('לא הצלחתי לשמור את הדף במכשיר. כנראה נגמר המקום.');
+        setWorking(false);
+        return;
+      }
 
       setWorking(false);
       navigate(paths.material(id));

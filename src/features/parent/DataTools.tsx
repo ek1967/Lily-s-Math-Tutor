@@ -9,6 +9,8 @@ import {
 } from '@/lib/db/backup';
 import { deliverBackup, formatBytes } from '@/lib/db/shareBackup';
 import { daysSinceExport, markExported } from '@/lib/security/pin';
+import { PIXEL_RETENTION_DAYS, prunePixels } from '@/lib/db/prune';
+import { formatBytes as bytes } from '@/lib/db/shareBackup';
 import { dayKey, relativeDayHe } from '@/lib/time';
 
 const MB = 1024 * 1024;
@@ -201,6 +203,34 @@ export function DataTools({ storage, onRestored }: Props) {
           e.target.value = '';
         }}
       />
+
+      <div className="mt-4 border-t border-line pt-3">
+        <h3 className="text-base">לפנות מקום</h3>
+        <p className="mt-1 text-sm text-ink-soft">
+          מוחק את הצילומים של דפי עבודה מלפני יותר מ־{PIXEL_RETENTION_DAYS} יום. רשימת
+          התרגילים, הסימונים והשיחה על כל תרגיל נשמרים — רק התמונה עצמה נמחקת.
+        </p>
+        <Button
+          variant="ghost"
+          block
+          className="mt-2"
+          disabled={busy}
+          onClick={() => {
+            setBusy(true);
+            void prunePixels()
+              .then((r) =>
+                setMessage(
+                  r.materials === 0
+                    ? 'אין כרגע צילומים ישנים מספיק כדי למחוק.'
+                    : `פונו ${bytes(r.bytesFreed)} מ־${r.materials} דפי עבודה ישנים.`,
+                ),
+              )
+              .finally(() => setBusy(false));
+          }}
+        >
+          לפנות מקום עכשיו
+        </Button>
+      </div>
 
       {message && <p className="mt-3 text-yes">{message}</p>}
       {error && <p className="mt-3 text-almost">{error}</p>}

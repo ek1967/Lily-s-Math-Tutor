@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Button, Card } from '@/components/ui';
-import { hasPin, setPin, verifyPin } from '@/lib/security/pin';
+import { clearPin, hasPin, setPin, verifyPin } from '@/lib/security/pin';
+import { backupFilename, exportAll } from '@/lib/db/backup';
+import { deliverBackup } from '@/lib/db/shareBackup';
 
 /**
  * A convenience barrier, and honest about it: everything behind it is already
@@ -11,6 +13,7 @@ export function PinGate({ onUnlock }: { onUnlock: () => void }) {
   const [pin, setValue] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
+  const [resetting, setResetting] = useState(false);
   const creating = !hasPin();
 
   const submit = async () => {
@@ -71,6 +74,35 @@ export function PinGate({ onUnlock }: { onUnlock: () => void }) {
         <Button block onClick={() => void submit()} disabled={pin.length < 4}>
           {creating ? 'לשמור את הקוד' : 'כניסה'}
         </Button>
+
+        {!creating && (
+          <Button
+            variant="quiet"
+            block
+            disabled={resetting}
+            onClick={() => {
+              // A forgotten code used to lock the parent out of the backup
+              // screen permanently — that is, out of the one tool that saves
+              // the data. So the reset exports first, then clears the code.
+              setResetting(true);
+              void (async () => {
+                try {
+                  const data = await exportAll(false);
+                  await deliverBackup(JSON.stringify(data), backupFilename());
+                } catch {
+                  /* Recovery must not depend on the export succeeding. */
+                }
+                clearPin();
+                setError('');
+                setValue('');
+                setResetting(false);
+                onUnlock();
+              })();
+            }}
+          >
+            {resetting ? 'שומרת גיבוי…' : 'שכחתי את הקוד'}
+          </Button>
+        )}
       </div>
     </Card>
   );
