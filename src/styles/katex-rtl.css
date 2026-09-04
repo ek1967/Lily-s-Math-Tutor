@@ -1,0 +1,26 @@
+/*
+ * KaTeX renders left-to-right. Inside an RTL document it inherits `direction:
+ * rtl` and the bidi algorithm reorders parentheses and minus signs, so
+ * `3 - (x + 2)` renders as nonsense. Every formula is therefore rendered inside
+ * an isolated LTR box — see components MathInline / MathBlock, which are the
+ * only sanctioned way to put maths on screen.
+ */
+.katex,
+.katex-display {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: initial;
+}
+
+.katex-display {
+  margin-block: 0.75rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-block-end: 0.25rem;
+}
+
+/* A long expression scrolls inside its own box; the page never scrolls sideways. */
+.math-scroll {
+  overflow-x: auto;
+  max-width: 100%;
+}

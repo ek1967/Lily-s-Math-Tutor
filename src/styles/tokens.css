@@ -1,0 +1,90 @@
+/*
+ * Warm, calm, grown-up. Two traps this palette deliberately avoids:
+ * institutional grey/white (feels like the test she failed) and childish
+ * primaries (a 13-year-old reads that as condescension).
+ *
+ * There is NO red anywhere. Red is a marking pen; a marking pen is shame.
+ * Wrong answers get soft amber, and the word is "almost", never "wrong".
+ */
+:root {
+  --c-bg: 251 247 242;          /* warm cream, not clinical white */
+  --c-surface: 255 252 248;
+  --c-surface-2: 244 237 228;
+  --c-line: 232 222 209;
+  --c-ink: 46 42 38;            /* warm near-black */
+  --c-ink-soft: 110 101 92;
+  --c-shadow: 90 70 45;
+
+  --c-primary: 139 95 191;      /* soft plum — not school blue, not alarm red */
+  --c-primary-strong: 122 79 174;
+  --c-primary-tint: 241 233 249;
+  --c-primary-ink: 255 255 255;
+
+  --c-yes: 78 154 107;
+  --c-yes-tint: 230 242 234;
+  --c-almost: 201 130 47;
+  --c-almost-tint: 251 238 220;
+  --c-streak: 224 164 88;
+
+  --c-strand-numbers: 63 143 138;
+  --c-strand-ratio: 192 138 62;
+  --c-strand-algebra: 139 95 191;
+  --c-strand-functions: 74 123 181;
+  --c-strand-geometry: 181 100 122;
+  --c-strand-stats: 94 148 85;
+
+  --radius-card: 1.25rem;
+  --shell-max: 34rem;           /* phone-first; never a wide wall of text */
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --c-bg: 28 25 23;             /* warm charcoal, not black */
+  --c-surface: 36 33 30;
+  --c-surface-2: 46 42 38;
+  --c-line: 61 56 51;
+  --c-ink: 242 237 231;
+  --c-ink-soft: 167 158 148;
+  --c-shadow: 0 0 0;
+
+  --c-primary: 182 154 224;
+  --c-primary-strong: 197 174 235;
+  --c-primary-tint: 52 44 66;
+  --c-primary-ink: 28 25 23;
+
+  --c-yes: 127 196 154;
+  --c-yes-tint: 39 54 45;
+  --c-almost: 229 168 92;
+  --c-almost-tint: 61 48 32;
+  --c-streak: 234 182 112;
+
+  --c-strand-numbers: 111 189 183;
+  --c-strand-ratio: 220 174 106;
+  --c-strand-algebra: 182 154 224;
+  --c-strand-functions: 130 174 221;
+  --c-strand-geometry: 218 151 168;
+  --c-strand-stats: 146 192 137;
+  color-scheme: dark;
+}
+
+/* Three font sizes, chosen in settings. Attention difficulties + small text
+   is a bad combination, so even the smallest step is generous. */
+[data-font='m'] { font-size: 106%; }
+[data-font='l'] { font-size: 115%; }
+
+/* ---------------------------------------------------------------------------
+ * Accent choices. She picks one during onboarding; it is hers, and it is the
+ * only thing in the app that shouts. Each has a light and a dark variant so the
+ * contrast holds either way.
+ * ------------------------------------------------------------------------- */
+[data-accent='teal']   { --c-primary: 45 140 135;  --c-primary-strong: 36 122 118; --c-primary-tint: 226 243 241; }
+[data-accent='rose']   { --c-primary: 190 92 118;  --c-primary-strong: 170 77 102; --c-primary-tint: 250 233 237; }
+[data-accent='amber']  { --c-primary: 183 124 43;  --c-primary-strong: 162 107 33; --c-primary-tint: 251 240 224; }
+[data-accent='forest'] { --c-primary: 76 143 92;   --c-primary-strong: 62 124 78;  --c-primary-tint: 231 243 234; }
+[data-accent='indigo'] { --c-primary: 84 106 190;  --c-primary-strong: 70 90 170;  --c-primary-tint: 232 236 250; }
+
+[data-theme='dark'][data-accent='teal']   { --c-primary: 108 197 190; --c-primary-strong: 134 213 207; --c-primary-tint: 30 54 52; --c-primary-ink: 28 25 23; }
+[data-theme='dark'][data-accent='rose']   { --c-primary: 226 148 170; --c-primary-strong: 238 172 190; --c-primary-tint: 62 40 46; --c-primary-ink: 28 25 23; }
+[data-theme='dark'][data-accent='amber']  { --c-primary: 226 170 92;  --c-primary-strong: 238 190 122; --c-primary-tint: 60 47 30; --c-primary-ink: 28 25 23; }
+[data-theme='dark'][data-accent='forest'] { --c-primary: 126 195 143; --c-primary-strong: 150 212 165; --c-primary-tint: 36 52 40; --c-primary-ink: 28 25 23; }
+[data-theme='dark'][data-accent='indigo'] { --c-primary: 140 160 226; --c-primary-strong: 165 182 238; --c-primary-tint: 40 45 66; --c-primary-ink: 28 25 23; }

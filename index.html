@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="he" dir="rtl" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!--
+      The app holds an Anthropic API key in localStorage, so the origin is locked
+      down hard: no CDNs, no analytics, no third-party fonts, and the only place
+      it may talk to is the Anthropic API. 'unsafe-inline' for styles is required
+      by KaTeX, which sets inline style attributes on the glyphs it lays out.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               script-src 'self';
+               style-src 'self' 'unsafe-inline';
+               font-src 'self';
+               img-src 'self' data: blob:;
+               media-src 'self' blob:;
+               worker-src 'self' blob:;
+               connect-src 'self' https://api.anthropic.com;
+               object-src 'none';
+               base-uri 'self';
+               form-action 'none'"
+    />
+    <meta name="theme-color" content="#FBF7F2" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1C1917" media="(prefers-color-scheme: dark)" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="מתמטיקה" />
+    <meta name="description" content="לומדת מתמטיקה אישית — הסברים, תרגול ועזרה בשיעורי בית" />
+    <title>המורה שלי למתמטיקה</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>כדי להשתמש בלומדה צריך להפעיל JavaScript בדפדפן.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
