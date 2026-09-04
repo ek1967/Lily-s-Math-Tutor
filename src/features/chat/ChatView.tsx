@@ -13,10 +13,19 @@ interface Props {
   /** Prepended to her first message, so she need not retype the question she
    *  is stuck on — describing it is often the hard part. */
   openingContextHe?: string;
+  /** Creates the thread row on the first message. See `useTutorChat`. */
+  ensureThread?: () => Promise<void>;
 }
 
-export function ChatView({ threadId, ctx, modelId, suggestionsHe = [], openingContextHe }: Props) {
-  const chat = useTutorChat(threadId, ctx, modelId);
+export function ChatView({
+  threadId,
+  ctx,
+  modelId,
+  suggestionsHe = [],
+  openingContextHe,
+  ensureThread,
+}: Props) {
+  const chat = useTutorChat(threadId, ctx, modelId, ensureThread);
   const [draft, setDraft] = useState('');
   const bottom = useRef<HTMLDivElement>(null);
 

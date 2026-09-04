@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ChatView } from '@/features/chat/ChatView';
 import { useTutorContext } from '@/features/chat/useTutorContext';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -41,24 +41,31 @@ export function ChatRoute() {
   const ctx = useTutorContext(topicId, mastery);
 
   useEffect(() => {
-    void (async () => {
-      const [existing, masteryMap] = await Promise.all([
-        getThread(threadId).catch(() => undefined),
-        getMasteryMap().catch(() => new Map<TopicId, MasteryRecord>()),
-      ]);
-      setMastery(masteryMap);
-      if (!existing) {
-        await createThread({
-          id: threadId,
-          kind: topicId ? 'topic' : 'free',
-          titleHe: topic ? topic.titleHe : 'שאלה מהירה',
-          ...(topicId ? { topicId } : {}),
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        }).catch(() => {});
-      }
-      setReady(true);
-    })();
+    void getMasteryMap()
+      .catch(() => new Map<TopicId, MasteryRecord>())
+      .then((m) => {
+        setMastery(m);
+        setReady(true);
+      });
+  }, [threadId]);
+
+  /**
+   * Called when she actually sends something, not when the screen opens.
+   * Creating the row on arrival filled her history with empty conversations
+   * she had merely walked past.
+   */
+  const ensureThread = useCallback(async () => {
+    const existing = await getThread(threadId).catch(() => undefined);
+    if (existing) return;
+    const now = Date.now();
+    await createThread({
+      id: threadId,
+      kind: topicId ? 'topic' : 'free',
+      titleHe: topic ? topic.titleHe : 'שאלה מהירה',
+      ...(topicId ? { topicId } : {}),
+      createdAt: now,
+      updatedAt: now,
+    }).catch(() => {});
   }, [threadId, topicId, topic]);
 
   if (!hasApiKey()) {
@@ -100,6 +107,7 @@ export function ChatRoute() {
         threadId={threadId}
         ctx={ctx}
         modelId={settings.model}
+        ensureThread={ensureThread}
         suggestionsHe={
           exercise
             ? [
@@ -118,6 +126,13 @@ export function ChatRoute() {
           : {})}
       />
       </ConsentGate>
+
+      <Link
+        to={paths.chats()}
+        className="tap mt-3 block rounded-md px-3 py-2 text-center text-sm text-ink-soft hover:text-ink"
+      >
+        שיחות קודמות
+      </Link>
     </div>
   );
 }

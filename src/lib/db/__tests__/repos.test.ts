@@ -4,6 +4,8 @@ import { applyAttempts, getDueTopics, getMastery, getMasteryMap, markIntroduced 
 import { activeDays, recentAttemptsForTopic, saveAttempts, totalAttempts } from '@/lib/db/repos/attemptRepo';
 import { getActiveSession, recentSessions, saveSession } from '@/lib/db/repos/sessionRepo';
 import { getKv, setKv } from '@/lib/db/repos/kvRepo';
+import { deleteMaterial, saveMaterial } from '@/lib/db/repos/materialRepo';
+import { addMessage, createThread, getMessages, recentThreads } from '@/lib/db/repos/chatRepo';
 import { asTopicId } from '@/types/curriculum';
 import { asGeneratorId } from '@/types/exercise';
 import type { AttemptRecord } from '@/lib/practice/engine';
@@ -178,5 +180,60 @@ describe('key-value store', () => {
 
   it('returns undefined for a key that was never set', async () => {
     expect(await getKv('missing')).toBeUndefined();
+  });
+});
+
+describe('chat threads', () => {
+  const thread = (id: string, updatedAt: number, over = {}) => ({
+    id,
+    kind: 'free' as const,
+    titleHe: 'שאלה מהירה',
+    createdAt: updatedAt,
+    updatedAt,
+    ...over,
+  });
+
+  it('lists the most recently used conversation first', async () => {
+    await createThread(thread('a', Date.UTC(2026, 8, 1)));
+    await createThread(thread('b', Date.UTC(2026, 8, 3)));
+    await createThread(thread('c', Date.UTC(2026, 8, 2)));
+
+    expect((await recentThreads()).map((t) => t.id)).toEqual(['b', 'c', 'a']);
+  });
+
+  it('takes a worksheet\'s conversations down with the worksheet', async () => {
+    // A thread titled after a deleted worksheet is a dead link in her history.
+    await saveMaterial(
+      {
+        id: 'mat-1',
+        kind: 'image',
+        titleHe: 'דף עבודה',
+        status: 'new',
+        pageCount: 0,
+        bytes: 0,
+        exercises: [],
+        detectedTopicIds: [],
+        thumbDataUrl: '',
+        createdAt: Date.UTC(2026, 8, 1),
+        updatedAt: Date.UTC(2026, 8, 1),
+      },
+      [],
+    );
+    await createThread(thread('mat-1:0', Date.UTC(2026, 8, 1), {
+      kind: 'homework',
+      materialId: 'mat-1',
+    }));
+    await createThread(thread('free-1', Date.UTC(2026, 8, 1)));
+    await addMessage({
+      threadId: 'mat-1:0',
+      role: 'user',
+      parts: [{ type: 'text', text: 'לא הבנתי' }],
+      createdAt: Date.UTC(2026, 8, 1),
+    });
+
+    await deleteMaterial('mat-1');
+
+    expect((await recentThreads()).map((t) => t.id)).toEqual(['free-1']);
+    expect(await getMessages('mat-1:0')).toEqual([]);
   });
 });

@@ -5,6 +5,7 @@ import { MathInline } from '@/lib/math/Katex';
 import { ChatView } from '@/features/chat/ChatView';
 import { useTutorContext } from '@/features/chat/useTutorContext';
 import { deleteMaterial, getMaterial, getPages, updateMaterial } from '@/lib/db/repos/materialRepo';
+import { createThread, getThread } from '@/lib/db/repos/chatRepo';
 import { buildGuidedOpening } from '@/lib/ai/prompts/homework';
 import { useSettings } from '@/stores/settingsStore';
 import { getTopic } from '@/data/curriculum';
@@ -115,6 +116,7 @@ export function MaterialRoute() {
         <ConsentGate>
         <ChatView
           threadId={`${material.id}:${openIndex}`}
+          ensureThread={() => ensureHomeworkThread(material, openIndex, openExercise.labelHe)}
           ctx={ctx}
           modelId={settings.model}
           openingContextHe={`${openExercise.promptHe}${openExercise.promptTex ? ` ${openExercise.promptTex}` : ''}`}
@@ -290,4 +292,29 @@ function ExerciseRow({
       </button>
     </li>
   );
+}
+
+/**
+ * Worksheet conversations had no thread row at all: the messages were written
+ * against an id nothing owned, so they never showed up in her history and the
+ * thread's timestamp never moved. One is created on the first question, like
+ * every other conversation.
+ */
+async function ensureHomeworkThread(
+  material: UploadedMaterial,
+  index: number,
+  labelHe: string,
+): Promise<void> {
+  const id = `${material.id}:${index}`;
+  const existing = await getThread(id).catch(() => undefined);
+  if (existing) return;
+  const now = Date.now();
+  await createThread({
+    id,
+    kind: 'homework',
+    titleHe: `${material.titleHe} · תרגיל ${labelHe}`,
+    materialId: material.id,
+    createdAt: now,
+    updatedAt: now,
+  }).catch(() => {});
 }

@@ -41,9 +41,16 @@ export async function updateMaterial(
   await db.materials.update(id, { ...patch, updatedAt: Date.now() });
 }
 
+/** Takes the worksheet's conversations with it: a thread titled after a
+ *  deleted worksheet is a dead link in her chat history. */
 export async function deleteMaterial(id: string): Promise<void> {
-  await db.transaction('rw', db.materials, db.pages, async () => {
+  await db.transaction('rw', db.materials, db.pages, db.threads, db.messages, async () => {
     await db.pages.where('materialId').equals(id).delete();
+    const threadIds = await db.threads.where('materialId').equals(id).primaryKeys();
+    if (threadIds.length > 0) {
+      await db.messages.where('threadId').anyOf(threadIds).delete();
+      await db.threads.bulkDelete(threadIds);
+    }
     await db.materials.delete(id);
   });
 }

@@ -9,8 +9,9 @@ export const paths = {
   review: () => '/review',
   homework: () => '/homework',
   material: (materialId: string) => `/homework/${materialId}`,
+  chats: () => '/chat',
   chat: (threadId: string) => `/chat/${threadId}`,
   settings: () => '/settings',
   parent: () => '/parent',
-  devGenerators: () => '/dev/generators',
+  recheck: () => '/recheck',
 } as const;

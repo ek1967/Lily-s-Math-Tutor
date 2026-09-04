@@ -210,6 +210,8 @@ export function ParentRoute() {
                 })}
             </ul>
           </Card>
+
+          <RecheckCard />
         </>
       )}
 
@@ -342,6 +344,31 @@ function SpendCard({
         זו תזכורת בלבד — התקרה האמיתית נקבעת בקונסולה של Anthropic. תרגול, שיעורים
         וחזרות לא עולים דבר.
       </p>
+    </Card>
+  );
+}
+
+/**
+ * Re-running the placement check.
+ *
+ * Worth offering at the start of a term or after a long holiday, and worth
+ * saying plainly that it costs nothing: the first version of this idea would
+ * have overwritten her history, which is why the copy promises it does not and
+ * `recheckDiagnostic` is what makes the promise true.
+ */
+function RecheckCard() {
+  const navigate = useNavigate();
+  return (
+    <Card>
+      <h2 className="mb-2 text-lg">בדיקה קצרה מחדש</h2>
+      <p className="text-ink-soft">
+        כמה שאלות, אחת מכל נושא מרכזי, כדי לראות מה נשכח בחופשה או בין טרימסטרים.
+        נושא שהיא עונה עליו נכון נשאר כפי שהוא; נושא שנשכח חוזר לתור החזרות.
+        שום התקדמות לא נמחקת.
+      </p>
+      <Button className="mt-3" block variant="ghost" onClick={() => navigate(paths.recheck())}>
+        להתחיל בדיקה
+      </Button>
     </Card>
   );
 }

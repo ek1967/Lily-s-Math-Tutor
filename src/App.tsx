@@ -16,13 +16,23 @@ const TopicRoute = lazy(() => import('@/routes/TopicRoute').then((m) => ({ defau
 const PracticeRoute = lazy(() => import('@/routes/PracticeRoute').then((m) => ({ default: m.PracticeRoute })));
 const ReviewRoute = lazy(() => import('@/routes/ReviewRoute').then((m) => ({ default: m.ReviewRoute })));
 const StudyRoute = lazy(() => import('@/routes/StudyRoute').then((m) => ({ default: m.StudyRoute })));
+const ChatsRoute = lazy(() => import('@/routes/ChatsRoute').then((m) => ({ default: m.ChatsRoute })));
 const ChatRoute = lazy(() => import('@/routes/ChatRoute').then((m) => ({ default: m.ChatRoute })));
 const HomeworkRoute = lazy(() => import('@/routes/HomeworkRoute').then((m) => ({ default: m.HomeworkRoute })));
 const MaterialRoute = lazy(() => import('@/routes/MaterialRoute').then((m) => ({ default: m.MaterialRoute })));
 const SettingsRoute = lazy(() => import('@/routes/SettingsRoute').then((m) => ({ default: m.SettingsRoute })));
 const OnboardingRoute = lazy(() => import('@/routes/OnboardingRoute').then((m) => ({ default: m.OnboardingRoute })));
+const RecheckRoute = lazy(() => import('@/routes/RecheckRoute').then((m) => ({ default: m.RecheckRoute })));
 const ParentRoute = lazy(() => import('@/routes/ParentRoute').then((m) => ({ default: m.ParentRoute })));
-const DevGeneratorsRoute = lazy(() => import('@/routes/DevGeneratorsRoute').then((m) => ({ default: m.DevGeneratorsRoute })));
+/**
+ * Development only, and conditional at module scope so it stays that way:
+ * `import.meta.env.DEV` is replaced with `false` in a production build, which
+ * lets Rollup drop the branch and with it the dynamic import — otherwise the
+ * generator inspector ships to her phone as a reachable URL.
+ */
+const DevGeneratorsRoute = import.meta.env.DEV
+  ? lazy(() => import('@/routes/DevGeneratorsRoute').then((m) => ({ default: m.DevGeneratorsRoute })))
+  : null;
 const NotFoundRoute = lazy(() => import('@/routes/NotFoundRoute').then((m) => ({ default: m.NotFoundRoute })));
 
 export function App() {
@@ -39,13 +49,17 @@ export function App() {
             <Route path="/practice/:topicId" element={<PracticeRoute />} />
             <Route path="/review" element={<ReviewRoute />} />
             <Route path="/study/:sessionId" element={<StudyRoute />} />
+            <Route path="/chat" element={<ChatsRoute />} />
             <Route path="/chat/:threadId" element={<ChatRoute />} />
             <Route path="/homework" element={<HomeworkRoute />} />
             <Route path="/homework/:materialId" element={<MaterialRoute />} />
             <Route path="/settings" element={<SettingsRoute />} />
             <Route path="/onboarding" element={<OnboardingRoute />} />
             <Route path="/parent" element={<ParentRoute />} />
-            <Route path="/dev/generators" element={<DevGeneratorsRoute />} />
+            <Route path="/recheck" element={<RecheckRoute />} />
+            {DevGeneratorsRoute && (
+              <Route path="/dev/generators" element={<DevGeneratorsRoute />} />
+            )}
             <Route path="*" element={<NotFoundRoute />} />
           </Routes>
         </Suspense>

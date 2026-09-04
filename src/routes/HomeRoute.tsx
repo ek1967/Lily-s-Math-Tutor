@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Card, Icon, ProgressRing } from '@/components/ui';
 import { useSettings } from '@/stores/settingsStore';
@@ -9,6 +9,7 @@ import { getTopic } from '@/data/curriculum';
 import { registerAllGenerators } from '@/generators';
 import { InstallNudge } from '@/components/layout/InstallNudge';
 import { BackupBanner } from '@/components/layout/BackupBanner';
+import { newFreeThreadId } from '@/features/chat/threadId';
 import { paths } from '@/router';
 
 registerAllGenerators();
@@ -36,6 +37,10 @@ export function HomeRoute() {
   useEffect(() => {
     if (!settings.hasOnboarded) navigate(paths.onboarding(), { replace: true });
   }, [settings.hasOnboarded, navigate]);
+
+  // Once per visit, not once per render: the id is part of a link she is
+  // reaching for, and it used to change underneath her.
+  const [freeThreadId] = useState(newFreeThreadId);
 
   const focusTopic = today.plan.focus ? getTopic(today.plan.focus) : undefined;
   const blockingTopic = today.plan.blocking ? getTopic(today.plan.blocking) : undefined;
@@ -139,10 +144,16 @@ export function HomeRoute() {
 
       <div className="grid grid-cols-1">
         <SecondaryCard
-          to={paths.chat(`free-${Date.now().toString(36)}`)}
+          to={paths.chat(freeThreadId)}
           icon="spark"
           label={`שאלה מהירה ל${settings.tutorName}`}
         />
+        <Link
+          to={paths.chats()}
+          className="tap mt-2 self-center rounded-md px-3 py-2 text-center text-sm text-ink-soft hover:text-ink"
+        >
+          שיחות קודמות
+        </Link>
       </div>
     </div>
   );

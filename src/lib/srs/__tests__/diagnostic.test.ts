@@ -1,5 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { applyDiagnostic, buildDiagnostic, diagnosticTopics, mergeDiagnostic } from '@/lib/srs/diagnostic';
+import {
+  applyDiagnostic,
+  buildDiagnostic,
+  diagnosticTopics,
+  mergeDiagnostic,
+  recheckDiagnostic,
+} from '@/lib/srs/diagnostic';
 import { registerAllGenerators } from '@/generators';
 import { TOPIC_BY_ID } from '@/data/curriculum';
 import { asTopicId, type TopicId } from '@/types/curriculum';
@@ -145,5 +151,75 @@ describe('merging results into existing history', () => {
   it('protects a topic with attempts even if never formally introduced', () => {
     const existing = new Map([[FRACTIONS, record(FRACTIONS, { totalAttempts: 6 })]]);
     expect(mergeDiagnostic([record(FRACTIONS)], existing).kept).toEqual([FRACTIONS]);
+  });
+});
+
+describe('re-running the check later', () => {
+  const topicId = asTopicId('num-integers-add-sub');
+  const now = Date.UTC(2026, 8, 4, 9);
+
+  /** A topic she has genuinely practised: level 4, a long interval, a streak. */
+  const practised = (): MasteryRecord => ({
+    ...newMastery(topicId, '2026-09-04', now),
+    level: 4,
+    ease: 2.5,
+    intervalDays: 21,
+    dueDate: '2026-09-25',
+    lastSeen: '2026-09-04',
+    streak: 5,
+    introduced: true,
+    totalAttempts: 40,
+    totalCorrect: 34,
+  });
+
+  it('leaves a topic she still gets right exactly as practice left it', () => {
+    const existing = new Map([[topicId, practised()]]);
+    const outcome = applyDiagnostic([attempt(topicId, 1)], now);
+
+    const { toWrite, slipped } = recheckDiagnostic(outcome, existing, now);
+
+    // One right answer must not promote past practised evidence, nor push the
+    // review further out.
+    expect(toWrite).toHaveLength(0);
+    expect(slipped).toHaveLength(0);
+  });
+
+  it('brings a slipped topic back into the queue without erasing its history', () => {
+    const existing = new Map([[topicId, practised()]]);
+    const outcome = applyDiagnostic([attempt(topicId, 0)], now);
+
+    const { toWrite, slipped } = recheckDiagnostic(outcome, existing, now);
+
+    expect(slipped).toEqual([topicId]);
+    const written = toWrite[0]!;
+    expect(written.dueDate).toBe('2026-09-04');
+    expect(written.level).toBe(3);
+    expect(written.lapses).toBe(1);
+    expect(written.streak).toBe(0);
+    // The point of the whole exercise: the history survives.
+    expect(written.totalAttempts).toBe(41);
+    expect(written.totalCorrect).toBe(34);
+    expect(written.introduced).toBe(true);
+  });
+
+  it('never drops a taught topic back to un-introduced', () => {
+    const existing = new Map([[topicId, { ...practised(), level: 1 as const }]]);
+    const outcome = applyDiagnostic([attempt(topicId, 0)], now);
+
+    const written = recheckDiagnostic(outcome, existing, now).toWrite[0]!;
+
+    // Level 0 would make the planner teach it from scratch, which is not what
+    // forgetting one question means.
+    expect(written.level).toBe(1);
+    expect(written.introduced).toBe(true);
+  });
+
+  it('writes a fresh record for a topic with no history at all', () => {
+    const outcome = applyDiagnostic([attempt(topicId, 0)], now);
+
+    const { toWrite, fresh } = recheckDiagnostic(outcome, new Map(), now);
+
+    expect(fresh).toEqual([topicId]);
+    expect(toWrite[0]!.totalAttempts).toBe(1);
   });
 });

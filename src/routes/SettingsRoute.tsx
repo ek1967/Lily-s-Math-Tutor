@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { Button, Card } from '@/components/ui';
 import { useSettings } from '@/stores/settingsStore';
-import { THEME_COLORS, type FontScale, type ThemeMode } from '@/types/settings';
+import { THEME_COLORS, type AppSettings, type FontScale, type ThemeMode } from '@/types/settings';
 import { clearApiKey, getApiKey, looksLikeApiKey, maskApiKey, setApiKey } from '@/lib/security/apiKey';
 import { resetClient } from '@/lib/ai/client';
 import { MODELS } from '@/lib/ai/models';
@@ -20,6 +20,15 @@ const SCALES: { value: FontScale; label: string }[] = [
   { value: 's', label: 'רגיל' },
   { value: 'm', label: 'גדול' },
   { value: 'l', label: 'גדול מאוד' },
+];
+
+/** The three values `AppSettings.dailyGoalMinutes` allows. Eight minutes is a
+ *  real option, not a token one: on a hard day it is the difference between a
+ *  short session and none at all. */
+const GOALS: { value: AppSettings['dailyGoalMinutes']; label: string }[] = [
+  { value: 8, label: '8 דקות' },
+  { value: 12, label: '12 דקות' },
+  { value: 20, label: '20 דקות' },
 ];
 
 const COLOR_LABELS: Record<(typeof THEME_COLORS)[number], string> = {
@@ -109,6 +118,18 @@ export function SettingsRoute() {
 
       <Card>
         <h2 className="mb-3 text-lg">לימוד</h2>
+        <div className="mb-4">
+          <Choice
+            label="כמה זמן ללמוד ביום"
+            options={GOALS}
+            value={settings.dailyGoalMinutes}
+            onChange={(v) => set({ dailyGoalMinutes: v })}
+          />
+          <p className="mt-2 text-sm text-ink-soft">
+            זה מה שכתוב על הכפתור הגדול במסך הבית, וזה קובע כמה תרגילים יש במסלול היומי.
+            קצר ועקבי עדיף על ארוך ומדי פעם.
+          </p>
+        </div>
         <label className="tap mb-4 flex items-center justify-between gap-4">
           <span>
             <span className="block">הקראה בקול</span>
@@ -160,7 +181,7 @@ export function SettingsRoute() {
   );
 }
 
-function Choice<T extends string>({
+function Choice<T extends string | number>({
   label,
   options,
   value,
@@ -177,7 +198,7 @@ function Choice<T extends string>({
       <div role="group" aria-label={label} className="flex gap-2">
         {options.map((o) => (
           <button
-            key={o.value}
+            key={String(o.value)}
             type="button"
             aria-pressed={value === o.value}
             onClick={() => onChange(o.value)}

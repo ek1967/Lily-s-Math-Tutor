@@ -24,6 +24,11 @@ export function useTutorChat(
   threadId: string,
   ctx: TutorContext,
   modelId: string,
+  /** Creates the thread row, awaited before the first message is written.
+   *  Threads are created on the first question rather than on arrival, so a
+   *  screen she opened and closed does not leave an empty conversation in her
+   *  history. */
+  ensureThread?: () => Promise<void>,
 ): ChatState {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [streaming, setStreaming] = useState<string | null>(null);
@@ -49,7 +54,9 @@ export function useTutorChat(
       };
       const history = [...messages, userMessage];
       setMessages(history);
-      void addMessage(userMessage).catch(() => {});
+      void (ensureThread ? ensureThread() : Promise.resolve())
+        .then(() => addMessage(userMessage))
+        .catch(() => {});
 
       const turns: ChatTurn[] = history.map((m, i) => ({
         role: m.role,
@@ -80,7 +87,7 @@ export function useTutorChat(
         },
       });
     },
-    [messages, threadId, ctx, modelId],
+    [messages, threadId, ctx, modelId, ensureThread],
   );
 
   const stop = useCallback(() => {

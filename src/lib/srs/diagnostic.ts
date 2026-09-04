@@ -104,6 +104,64 @@ export function mergeDiagnostic(
 }
 
 /**
+ * The same check, run again months later.
+ *
+ * A re-check at the start of a term asks a different question from the first
+ * one: not "what does she know" but "what has slipped". So it never replaces a
+ * record built from real practice — dozens of practised exercises outweigh one
+ * question, in both directions:
+ *
+ *   - Answered correctly: nothing changes. One right answer is not evidence
+ *     enough to promote a topic past what practice has established, and
+ *     promoting it would push a review she needs further away.
+ *   - Answered wrongly: the topic comes back into the queue today and takes a
+ *     lapse, exactly as a failed review would. Her history is kept intact;
+ *     only the schedule moves.
+ *   - No history at all: written as a fresh placement result, as on first run.
+ */
+export function recheckDiagnostic(
+  outcome: DiagnosticOutcome,
+  existing: ReadonlyMap<TopicId, MasteryRecord>,
+  now = Date.now(),
+): { toWrite: MasteryRecord[]; slipped: TopicId[]; fresh: TopicId[] } {
+  const today = dayKey(now);
+  const gaps = new Set(outcome.gaps);
+  const toWrite: MasteryRecord[] = [];
+  const slipped: TopicId[] = [];
+  const fresh: TopicId[] = [];
+
+  for (const record of outcome.records) {
+    const prior = existing.get(record.topicId);
+    const hasHistory = prior !== undefined && (prior.introduced || prior.totalAttempts > 0);
+
+    if (!hasHistory) {
+      fresh.push(record.topicId);
+      toWrite.push(record);
+      continue;
+    }
+    if (!gaps.has(record.topicId)) continue;
+
+    slipped.push(record.topicId);
+    toWrite.push({
+      ...prior,
+      // One step back, never below 1: she was taught this, so the planner
+      // should revise it rather than introduce it from scratch.
+      level: Math.max(1, prior.level - 1) as MasteryLevel,
+      ease: Math.max(1.3, prior.ease - 0.2),
+      intervalDays: 0,
+      dueDate: today,
+      streak: 0,
+      lapses: prior.lapses + 1,
+      totalAttempts: prior.totalAttempts + record.totalAttempts,
+      totalCorrect: prior.totalCorrect + record.totalCorrect,
+      updatedAt: now,
+    });
+  }
+
+  return { toWrite, slipped, fresh };
+}
+
+/**
  * Turns the results into a starting point.
  *
  * A topic she got right is marked known and scheduled for a light review; one
