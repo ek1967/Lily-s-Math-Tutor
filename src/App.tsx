@@ -4,6 +4,7 @@ import { HomeRoute } from '@/routes/HomeRoute';
 import { LearnRoute } from '@/routes/LearnRoute';
 import { TopicRoute } from '@/routes/TopicRoute';
 import { PracticeRoute } from '@/routes/PracticeRoute';
+import { ReviewRoute } from '@/routes/ReviewRoute';
 import { HomeworkRoute } from '@/routes/HomeworkRoute';
 import { SettingsRoute } from '@/routes/SettingsRoute';
 import { DevGeneratorsRoute } from '@/routes/DevGeneratorsRoute';
@@ -24,6 +25,7 @@ export function App() {
           <Route path="/homework" element={<HomeworkRoute />} />
           <Route path="/settings" element={<SettingsRoute />} />
           <Route path="/practice/:topicId" element={<PracticeRoute />} />
+          <Route path="/review" element={<ReviewRoute />} />
           <Route path="/dev/generators" element={<DevGeneratorsRoute />} />
           <Route path="*" element={<NotFoundRoute />} />
         </Routes>
